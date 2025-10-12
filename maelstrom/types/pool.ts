@@ -1,4 +1,6 @@
+import { parse } from "path"
 import { LiquidityPoolToken, Token } from "./token"
+import { parseEther } from "viem"
 
 export interface Pool {
   token: Token
@@ -21,6 +23,20 @@ export interface RowPool{
   sellPrice: string,
   totalLiquidity: string
   lpToken?: LiquidityPoolToken
+}
+
+const ETH: Token = {
+  address: "0x0000000000000000000000000000000000000000",
+  symbol: "ETH",
+  name: "Ether",
+  decimals: 18,
+}
+
+export const ETH_ROW_POOL: RowPool = {
+  token: ETH,
+  buyPrice: parseEther("1").toString(),
+  sellPrice: parseEther("1").toString(),
+  totalLiquidity: parseEther("0").toString(),
 }
 
 export interface InitPool{

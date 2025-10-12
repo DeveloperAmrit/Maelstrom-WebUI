@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TokenSelector } from "@/components/swap/token-selector";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
@@ -14,13 +14,18 @@ import { CONTRACT_ADDRESS } from "@/types/contract";
 import { usePublicClient, useReadContract, useWriteContract } from "wagmi";
 import { Token } from "@/types/token";
 import { SwapRequest } from "@/types/trades";
+import { ETH_ROW_POOL, RowPool } from "@/types/pool";
+import { parseEther } from "viem";
+import { delay } from "lodash";
 
 interface SwapState {
   tokenIn: Token | undefined;
   tokenOut: Token | undefined;
   amountIn: string;
   amountOut: string;
+  exchangeRate: string;
 }
+const ITEMS_PER_PAGE = 10;
 
 export function SwapInterface() {
   const { writeContractAsync } = useWriteContract();
@@ -35,23 +40,36 @@ export function SwapInterface() {
     tokenOut: undefined,
     amountIn: "",
     amountOut: "",
+    exchangeRate: "",
   });
+  const [totalPools, setTotalPools] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [loadedTokens, setLoadedTokens] = useState(0);
+  const [tokens, setTokens] = useState<RowPool[]>([ETH_ROW_POOL]);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [exchangeRate, setExchangeRate] = useState<bigint>(BigInt(0));
-  const [tokenInSellPrice, setTokenInSellPrice] = useState<bigint>(BigInt(0));
-  const [tokenOutBuyPrice, setTokenOutBuyPrice] = useState<bigint>(BigInt(0));
+  const [exchangeRate, setExchangeRate] = useState<number>(0);
+  const [tokenInSellPrice, setTokenInSellPrice] = useState<number>(0);
+  const [tokenOutBuyPrice, setTokenOutBuyPrice] = useState<number>(0);
   const [fetchingRates, setFetchingRates] = useState(false);
   const { toast } = useToast();
 
   const calculateOutput = (amount: string, isInput: boolean) => {
-    if (!amount) return "";
+    if (!amount || !tokenInSellPrice || !tokenOutBuyPrice) return "";
+
+    const amountNum = Number(amount);
+    if (isNaN(amountNum) || amountNum <= 0) return "";
+
     if (isInput) {
-      const output = (BigInt(amount) * tokenInSellPrice) / tokenOutBuyPrice;
-      return Number(output).toFixed(3);
+      // Converting tokenIn to tokenOut: amount * sellPrice / buyPrice
+      const output = (amountNum * tokenInSellPrice) / tokenOutBuyPrice;
+      return output.toString();
+    } else {
+      // Converting tokenOut to tokenIn: amount * buyPrice / sellPrice
+      const output = (amountNum * tokenOutBuyPrice) / tokenInSellPrice;
+      return output.toString();
     }
-    const output = (tokenOutBuyPrice * BigInt(amount)) / tokenInSellPrice;
-    return Number(output).toFixed(3);
   };
 
   const handleAmountInChange = async (value: string) => {
@@ -73,11 +91,27 @@ export function SwapInterface() {
   const handletokenInChange = async (token: Token) => {
     try {
       setFetchingRates(true);
-      const sellPrice = await contractClient.getSellPrice(token);
-      setExchangeRate(BigInt(tokenOutBuyPrice)/BigInt(sellPrice));
-      setTokenInSellPrice(BigInt(sellPrice));
+      let sellPrice = parseEther("1").toString();
+      if (!(token.name === "Ether" && token.symbol === "ETH")) {
+        sellPrice = await contractClient.getSellPrice(token);
+      }
+
+      const newSellPrice = Number(sellPrice);
+      const newExchangeRate = tokenOutBuyPrice / newSellPrice;
+
+      setTokenInSellPrice(newSellPrice);
+      setExchangeRate(newExchangeRate);
+
       setSwapState((prev) => {
-        const newState = { ...prev, tokenIn: token };
+        const formattedExchangeRate =
+          isFinite(newExchangeRate) && newExchangeRate > 0
+            ? newExchangeRate.toString()
+            : "0";
+        const newState = {
+          ...prev,
+          tokenIn: token,
+          exchangeRate: formattedExchangeRate,
+        };
         if (prev.amountIn) {
           newState.amountOut = calculateOutput(prev.amountIn, true);
         }
@@ -85,18 +119,35 @@ export function SwapInterface() {
       });
       setFetchingRates(false);
     } catch (error) {
-      console.error(`Error getting exchnage rates:,${error}`);
+      console.error(`Error getting exchange rates:,${error}`);
+      setFetchingRates(false);
     }
   };
 
   const handletokenOutChange = async (token: Token) => {
     try {
       setFetchingRates(true);
-      const buyPrice = await contractClient.getBuyPrice(token);
-      setTokenOutBuyPrice(BigInt(buyPrice));
-      setExchangeRate(BigInt(buyPrice)/BigInt(tokenInSellPrice));
+      let buyPrice = parseEther("1").toString();
+      if (!(token.name === "Ether" && token.symbol === "ETH")) {
+        buyPrice = await contractClient.getBuyPrice(token);
+      }
+
+      const newBuyPrice = Number(buyPrice);
+      const newExchangeRate = newBuyPrice / tokenInSellPrice;
+
+      setTokenOutBuyPrice(newBuyPrice);
+      setExchangeRate(newExchangeRate);
+
       setSwapState((prev) => {
-        const newState = { ...prev, tokenOut: token };
+        const formattedExchangeRate =
+          isFinite(newExchangeRate) && newExchangeRate > 0
+            ? newExchangeRate.toString()
+            : "0";
+        const newState = {
+          ...prev,
+          tokenOut: token,
+          exchangeRate: formattedExchangeRate,
+        };
         if (prev.amountIn) {
           newState.amountOut = calculateOutput(prev.amountIn, true);
         }
@@ -104,23 +155,38 @@ export function SwapInterface() {
       });
       setFetchingRates(false);
     } catch (error) {
-      console.error(`Error getting exchnage rates:,${error}`);
+      console.error(`Error getting exchange rates:,${error}`);
+      setFetchingRates(false);
     }
   };
 
-  const handleSwapTokens = () => {
-    if(!swapState.tokenOut || !swapState.tokenIn) return;
+  const handleSwapTokens = async () => {
+    if (!swapState.tokenOut || !swapState.tokenIn) return;
+
     setIsSwapping(true);
-    setSwapState((prev) => ({
-      tokenIn: prev.tokenOut,
-      tokenOut: prev.tokenIn,
-      amountIn: prev.amountOut,
-      amountOut: prev.amountIn,
-    }));
-    handletokenInChange(swapState.tokenOut);
-    handletokenOutChange(swapState.tokenIn);
-    handleAmountInChange(swapState.amountOut);
-    setIsSwapping(false);
+
+    try {
+      // Store the current tokens before swapping
+      const currentTokenIn = swapState.tokenIn;
+      const currentTokenOut = swapState.tokenOut;
+
+      // Swap the tokens in state first
+      setSwapState((prev) => ({
+        tokenIn: prev.tokenOut,
+        tokenOut: prev.tokenIn,
+        amountIn: prev.amountOut,
+        amountOut: prev.amountIn,
+        exchangeRate: prev.exchangeRate, // Keep current rate temporarily
+      }));
+
+      // Now update the exchange rates for the swapped tokens
+      await handletokenInChange(currentTokenOut);
+      await handletokenOutChange(currentTokenIn);
+    } catch (error) {
+      console.error("Error swapping tokens:", error);
+    } finally {
+      setIsSwapping(false);
+    }
   };
 
   const handlePreviewSwap = () => {
@@ -151,7 +217,7 @@ export function SwapInterface() {
       tokenIn: swapState.tokenIn,
       tokenOut: swapState.tokenOut,
       amountIn: swapState.amountIn,
-      minimumTokenOut: swapState.amountOut, // TODO: Develop UI to set slippage tolerance
+      minimumTokenOut: swapState.amountOut,
     };
     const result = await contractClient.swap(swapRequest);
     if (result.success) {
@@ -167,6 +233,62 @@ export function SwapInterface() {
       });
     }
   };
+
+  const getPoolLength = async () => {
+    try {
+      const poolCount = await contractClient.getPoolCount();
+      console.log(`Total pools: ${poolCount}`);
+      setTotalPools(poolCount);
+      return poolCount;
+    } catch (error) {
+      console.error("Error fetching total pools:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      setError(`Failed to fetch total pools count: ${errorMessage}`);
+      return 0;
+    }
+  };
+
+  const loadAllPools = async (totalPoolsCount: number) => {
+    try {
+      let currentLoaded = 0;
+      while (currentLoaded < totalPoolsCount) {
+        const startIndex = currentLoaded;
+        const endIndex = Math.min(
+          startIndex + ITEMS_PER_PAGE - 1,
+          totalPoolsCount - 1
+        );
+        const newPools = await contractClient.getPools(startIndex, endIndex);
+        if (newPools.length === 0) break; // No more pools to load
+        setTokens((prev) => [...prev, ...newPools]);
+        setLoadedTokens((prev) => prev + newPools.length);
+        currentLoaded += newPools.length;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    } catch (error) {
+      console.error("Error loading pools:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      setError(`Failed to load pools: ${errorMessage}`);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setIsLoading(true);
+      try {
+        const poolCount = await getPoolLength();
+        await loadAllPools(poolCount);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        setError(`Failed to initialize token list: ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    init();
+  }, []);
 
   return (
     <div className="w-full max-w-md mx-auto p-4">
@@ -211,6 +333,7 @@ export function SwapInterface() {
                         Sell
                       </div>
                       <TokenSelector
+                        Tokens={tokens}
                         selectedToken={swapState.tokenIn}
                         onTokenChange={handletokenInChange}
                       />
@@ -219,7 +342,12 @@ export function SwapInterface() {
                       <input
                         placeholder="0.00"
                         value={swapState.amountIn}
-                        disabled={!swapState.tokenIn || fetchingRates || !swapState.tokenOut || isSwapping}
+                        disabled={
+                          !swapState.tokenIn ||
+                          fetchingRates ||
+                          !swapState.tokenOut ||
+                          isSwapping
+                        }
                         onChange={(e) => handleAmountInChange(e.target.value)}
                         className="w-full h-16 text-3xl font-medium bg-black/10 group-hover:bg-black/20 rounded-xl px-4 
                           border border-white/[0.05] focus:border-accent-cyan/30 focus:ring-2 focus:ring-accent-cyan/20
@@ -245,6 +373,7 @@ export function SwapInterface() {
                     <div className="flex items-center justify-between mb-1">
                       <div className="text-lg font-medium text-white">Buy</div>
                       <TokenSelector
+                        Tokens={tokens}
                         selectedToken={swapState.tokenOut}
                         onTokenChange={handletokenOutChange}
                       />
@@ -254,7 +383,12 @@ export function SwapInterface() {
                         placeholder="0.00"
                         value={swapState.amountOut}
                         onChange={(e) => handleAmountOutChange(e.target.value)}
-                        disabled={!swapState.tokenIn || fetchingRates || !swapState.tokenOut || isSwapping}
+                        disabled={
+                          !swapState.tokenIn ||
+                          fetchingRates ||
+                          !swapState.tokenOut ||
+                          isSwapping
+                        }
                         className="w-full h-16 text-3xl font-medium bg-black/20 rounded-lg px-4 
                           border-transparent focus:border-accent/50 focus:ring-1 focus:ring-accent/50
                           placeholder:text-white/30 transition-all duration-200"
@@ -268,13 +402,17 @@ export function SwapInterface() {
                   <div className="mt-5 space-y-3 p-4 bg-white/[0.02] border border-white/[0.05] rounded-xl backdrop-blur-sm">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/50 font-medium">Rate</span>
-                      {swapState.tokenIn && swapState.tokenOut && !fetchingRates && (
-                        <span className="text-white/80 font-medium">
-                          1 {swapState.tokenIn.symbol.toUpperCase()} ={" "}
-                          {Number(exchangeRate).toFixed(3)}{" "}
-                          {swapState.tokenOut.symbol.toUpperCase()}
-                        </span>
-                      )}
+                      {swapState.tokenIn &&
+                        swapState.tokenOut &&
+                        !fetchingRates &&
+                        !isSwapping && (
+                          <span className="text-white/80 font-medium">
+                            1 {swapState.tokenIn.symbol.toUpperCase()} ={" "}
+                            {swapState.exchangeRate}{" "}
+                            {/*TODO: error to be resolved*/}
+                            {swapState.tokenOut.symbol.toUpperCase()}
+                          </span>
+                        )}
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-white/50 font-medium">Fee</span>
@@ -303,11 +441,21 @@ export function SwapInterface() {
               </TabsContent>
 
               <TabsContent value="buy" className="mt-2">
-                <BuyForm />
+                <BuyForm
+                  tokens={tokens}
+                  handleTokenOutChange={handletokenOutChange}
+                  buyPrice={tokenOutBuyPrice.toString()}
+                  isFetchingRates={fetchingRates}
+                />
               </TabsContent>
 
               <TabsContent value="sell" className="mt-2">
-                <SellForm />
+                <SellForm 
+                  tokens={tokens}
+                  handleTokenInChange={handletokenInChange}
+                  sellPrice={tokenInSellPrice.toString()}
+                  isFetchingRates={fetchingRates}
+                />
               </TabsContent>
             </Tabs>
           </div>

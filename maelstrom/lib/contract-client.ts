@@ -2,7 +2,7 @@ import { ABI, IContractClient } from "@/types/contract";
 import { InitPool, InitPoolResult, Pool, Reserve, RowPool } from "@/types/pool";
 import { LiquidityPoolToken, Token } from "@/types/token";
 import { BuyRequest, BuyResult, BuyTrade, Deposit, DepositRequest, DepositResult, SellRequest, SellResult, SellTrade, SwapRequest, SwapResult, SwapTrade, Withdraw, WithdrawRequest, WithdrawResult } from "@/types/trades";
-import { Address, erc20Abi, parseAbiItem } from "viem";
+import { Address, erc20Abi, formatEther, parseAbiItem } from "viem";
 import { Config, UsePublicClientReturnType } from "wagmi";
 import { WriteContractMutateAsync } from "wagmi/query";
 
@@ -27,20 +27,6 @@ export class ContractClient implements IContractClient {
             })
         } catch (error) {
             throw new Error(`Token approval failed: ${(error as Error).message}`);
-        }
-    }
-
-    private async balanceOf(token: Address, owner: Address): Promise<string> {
-        try {
-            const data = await this.publicClient?.readContract({
-                address: token,
-                abi: erc20Abi,
-                functionName: 'balanceOf',
-                args: [owner]
-            });
-            return data!.toString();
-        } catch (error) {
-            throw new Error(`Error fetching balance: ${(error as Error).message}`);
         }
     }
 
@@ -219,26 +205,33 @@ export class ContractClient implements IContractClient {
 
     async getLPToken(token: Token, user: Address): Promise<LiquidityPoolToken> {
         try {
+            const tokenAddress = await this.publicClient?.readContract({
+                address: this.contractAddress,
+                abi: ABI,
+                functionName: 'poolToken',
+                args: [token.address]
+            });
+            if (!tokenAddress) throw new Error(`No LP token found for the given token.`);
             const [totalSupply, balance] = await Promise.all([
                 this.publicClient?.readContract({
-                    address: token.address as Address,
+                    address: tokenAddress as Address,
                     abi: erc20Abi,
                     functionName: 'totalSupply',
                     args: []
                 }),
                 this.publicClient?.readContract({
-                    address: token.address as Address,
+                    address: tokenAddress as Address,
                     abi: erc20Abi,
                     functionName: 'balanceOf',
                     args: [user]
                 })
             ]);
-
+            const tokenMetaData = await this.getToken(tokenAddress as Address);
             return {
-                address: token.address,
-                symbol: token.symbol,
-                name: token.name,
-                decimals: token.decimals,
+                address: tokenAddress,
+                symbol: tokenMetaData.symbol,
+                name: tokenMetaData.name,
+                decimals: tokenMetaData.decimals,
                 totalSupply: totalSupply!.toString(),
                 balance: balance!.toString()
             }
@@ -258,8 +251,8 @@ export class ContractClient implements IContractClient {
 
             if (!data) throw new Error(`Error fetching reserves`);
             return {
-                tokenReserve: data![0].toString(),
-                ethReserve: data![1].toString()
+                tokenReserve: data![1].toString(),
+                ethReserve: data![0].toString()
             }
         } catch (error) {
             throw new Error(`Error fetching reserves: ${(error as Error).message}`);
@@ -327,16 +320,18 @@ export class ContractClient implements IContractClient {
         }
     }
 
-    private getTotalLiquidity(avgPrice: string, tokenReserve: string): string {
-        return (BigInt(avgPrice) * BigInt(tokenReserve)).toString();
+    private getTotalLiquidity(avgPrice: string, reserve: Reserve): string {
+        const tokenInEth = formatEther(BigInt(reserve.tokenReserve));
+        const liquidity = (Number(avgPrice) * (Number(tokenInEth))) / Number(1e18) + Number(formatEther(BigInt(reserve.ethReserve)));
+        return liquidity.toString();
     }
 
     private getAvgPrice(buyPrice: string, sellPrice: string): string {
-        return ((BigInt(buyPrice) + BigInt(sellPrice)) / BigInt(2)).toString();
+        return ((Number(buyPrice) + Number(sellPrice)) / Number(2)).toString();
     }
 
     private getAPR(volume24h: string, totalLiquidity: string): string {
-        return ((BigInt(volume24h) * BigInt(0.03) * BigInt(365)) / BigInt(totalLiquidity)).toString();//Custom 3% trade fee
+        return ((Number(volume24h) * Number(0.03) * Number(365)) / Number(totalLiquidity)).toString();//Custom 3% trade fee
     }
 
     private async getBlockTimestamp(blockNumber: bigint): Promise<number> {
@@ -567,18 +562,18 @@ export class ContractClient implements IContractClient {
             const buyLogs = await this.getBuyTradeEventLogs(Number(fromBlock), Number(toBlock), token);
             const sellLogs = await this.getSellTradeEventLogs(Number(fromBlock), Number(toBlock), token);
             const swapLogs = await this.getSwapTradeEventLogs(Number(fromBlock), Number(toBlock), token);
-            let volume = BigInt(0);
+            let volume = 0;
             buyLogs.forEach(log => {
-                volume += BigInt(log.ethAmount);
+                volume += Number(log.ethAmount);
             });
             sellLogs.forEach(log => {
-                volume += BigInt(log.ethAmount);
+                volume += Number(log.ethAmount);
             });
             swapLogs.forEach(log => {
                 if (log.tokenIn.address === token.address) {
-                    volume += BigInt(log.amountIn) * BigInt(log.sellPrice);
+                    volume += Number(log.amountIn) * Number(log.sellPrice);
                 } else if (log.tokenOut.address === token.address) {
-                    volume += BigInt(log.amountOut) * BigInt(log.buyPrice);
+                    volume += Number(log.amountOut) * Number(log.buyPrice);
                 }
             });
             return volume.toString();
@@ -696,7 +691,7 @@ export class ContractClient implements IContractClient {
             const tokenRatio = await this.getTokenRatio(token);
             const volume24h = await this.get24hVolume(token);
             const avgPrice = this.getAvgPrice(buyPrice, sellPrice);
-            const totalLiquidity = this.getTotalLiquidity(avgPrice, reserve.tokenReserve);
+            const totalLiquidity = this.getTotalLiquidity(avgPrice, reserve);
             const apr = this.getAPR(volume24h, totalLiquidity);
             const lastExchangeTs = await this.getLastExchangeTimestamp(token);
             return {
@@ -739,7 +734,7 @@ export class ContractClient implements IContractClient {
                 tokens.map(async (token) => await this.getReserves(token))
             );
             const liquidity = await Promise.all(
-                tokens.map(async (token, index) => await this.getTotalLiquidity(this.getAvgPrice(buyPrices[index], sellPrices[index]), reserves[index].tokenReserve))
+                tokens.map(async (token, index) => await this.getTotalLiquidity(this.getAvgPrice(buyPrices[index], sellPrices[index]), reserves[index]))
             );
             const result = (tokens || []).map((token, index) => ({
                 token: token,
@@ -788,7 +783,7 @@ export class ContractClient implements IContractClient {
                 tokens.map(async (token) => await this.getReserves(token))
             );
             const liquidity = await Promise.all(
-                tokens.map(async (token, index) => await this.getTotalLiquidity(this.getAvgPrice(buyPrices[index], sellPrices[index]), reserves[index].tokenReserve))
+                tokens.map(async (token, index) => await this.getTotalLiquidity(this.getAvgPrice(buyPrices[index], sellPrices[index]), reserves[index]))
             );
             const lpTokens = await Promise.all(
                 tokens.map(async (token) => await this.getLPToken(token, user))

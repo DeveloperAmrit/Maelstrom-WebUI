@@ -11,7 +11,7 @@ import { CONTRACT_ADDRESS } from "@/types/contract";
 import { InitPool } from "@/types/pool";
 import { useState } from "react";
 import { toast } from "sonner";
-import { formatEther, parseEther, isAddress } from "viem";
+import { parseEther, isAddress } from "viem";
 import { Loader2, Plus, DollarSign, Coins } from "lucide-react";
 
 export default function CreatePoolPage() {
@@ -121,9 +121,7 @@ export default function CreatePoolPage() {
     try {
       // Convert amounts to wei (assuming 18 decimals for ETH and proper decimals for token)
       const ethAmountWei = parseEther(formData.ethAmount).toString();
-      const tokenAmountWei = tokenInfo 
-        ? (BigInt(formData.tokenAmount) * BigInt(10 ** tokenInfo.decimals)).toString()
-        : parseEther(formData.tokenAmount).toString();
+      const tokenAmountWei = parseEther(formData.tokenAmount).toString();
       const buyPriceWei = parseEther(formData.inititalBuyPrice).toString();
       const sellPriceWei = parseEther(formData.initialSellPrice).toString();
 

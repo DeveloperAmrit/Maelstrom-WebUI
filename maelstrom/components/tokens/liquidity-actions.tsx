@@ -11,7 +11,7 @@ import { usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
 import { Reserve } from "@/types/pool";
-import { parseEther } from "viem";
+import { formatEther, parseEther } from "viem";
 
 interface LiquidityActionsProps {
   token: Token;
@@ -47,8 +47,8 @@ export function LiquidityActions({
       const ethAmount = Number(value) / Number(poolRatio);
       const proportion = Number(value) / Number(reserve.tokenReserve);
       const lpTokenAmount = proportion * Number(lpToken.totalSupply);
-      setEthAmount(ethAmount.toFixed(3));
-      setLpAmount(lpTokenAmount.toFixed(3));
+      setEthAmount(String(ethAmount));
+      setLpAmount(String(lpTokenAmount));
     },
     [reserve, poolRatio, lpToken.totalSupply]
   );
@@ -59,8 +59,8 @@ export function LiquidityActions({
       const tokenAmount = Number(value) * Number(poolRatio);
       const proportion = Number(value) / Number(reserve.ethReserve);
       const lpTokenAmount = proportion * Number(lpToken.totalSupply);
-      setTokenAmount(tokenAmount.toFixed(3));
-      setLpAmount(lpTokenAmount.toFixed(3));
+      setTokenAmount(String(tokenAmount));
+      setLpAmount(String(lpTokenAmount));
     },
     [reserve, poolRatio, lpToken.totalSupply]
   );
@@ -71,8 +71,8 @@ export function LiquidityActions({
       const proportion = Number(value) / Number(lpToken.totalSupply);
       const ethAmount = proportion * Number(reserve.ethReserve);
       const tokenAmount = proportion * Number(reserve.tokenReserve);
-      setEthAmount(ethAmount.toFixed(3));
-      setTokenAmount(tokenAmount.toFixed(3));
+      setEthAmount(String(ethAmount));
+      setTokenAmount(String(tokenAmount));
     },
     [reserve, lpToken.totalSupply]
   );
@@ -246,9 +246,9 @@ export function LiquidityActions({
                 parseFloat(lpAmount) > 0) && (
                 <div className="text-center space-y-1 pt-2">
                   <div className="text-sm text-foreground/60">
-                    1 {token.symbol} = {poolRatio.toFixed(6)} ETH
+                    1 {token.symbol} = {(1 / poolRatio)} ETH
                     <span className="mx-2">•</span>1 ETH ={" "}
-                    {(1 / poolRatio).toLocaleString()} {token.symbol}
+                    {(poolRatio)} {token.symbol}
                   </div>
                 </div>
               )}
@@ -272,7 +272,7 @@ export function LiquidityActions({
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-foreground/60">
-                      Total Supply: {lpToken.totalSupply}
+                      Total Supply: {formatEther(BigInt(lpToken.totalSupply))}
                     </div>
                   </div>
                 </div>
@@ -290,9 +290,9 @@ export function LiquidityActions({
                 {lpAmount && parseFloat(lpAmount) > 0 && (
                   <div className="mt-3 text-xs text-foreground/60 text-center">
                     {(
-                      (parseFloat(lpAmount) / parseFloat(lpToken.totalSupply)) *
+                      (Number(lpAmount) / Number(formatEther(BigInt(lpToken.totalSupply)))) *
                       100
-                    ).toFixed(3)}
+                    )}
                     % of pool
                   </div>
                 )}
@@ -342,7 +342,7 @@ export function LiquidityActions({
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-foreground/60">
-                      LP Balance: {lpToken.balance}
+                      LP Balance: {formatEther(BigInt(lpToken.balance))}
                     </div>
                   </div>
                 </div>
@@ -360,7 +360,7 @@ export function LiquidityActions({
 
                 <div className="mt-3 text-xs text-foreground/60 text-center">
                   {(
-                    (parseFloat(lpAmount) / parseFloat(lpToken.totalSupply)) *
+                    (Number(lpAmount) / Number(formatEther(BigInt(lpToken.totalSupply)))) *
                     100
                   ).toFixed(3)}
                   % of pool
@@ -429,9 +429,9 @@ export function LiquidityActions({
               {parseFloat(lpAmount) > 0 && (
                 <div className="text-center space-y-1 pt-2">
                   <div className="text-sm text-foreground/60">
-                    1 {token.symbol} = {(poolRatio).toFixed(6)} ETH
+                   1 {token.symbol} = {(1 / poolRatio)} ETH
                     <span className="mx-2">•</span>1 ETH ={" "}
-                    {(1/poolRatio).toLocaleString()} {token.symbol}
+                    {(poolRatio)} {token.symbol}
                   </div>
                 </div>
               )}

@@ -28,32 +28,31 @@ export function TokenList() {
   const [totalPools, setTotalPools] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);
   const [loadedTokens, setLoadedTokens] = useState(0);
-  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [allPoolsLoaded, setAllPoolsLoaded] = useState(false);
   const observerRef = useRef<HTMLDivElement>(null);
 
-  const getPoolLength = async () => {
+  const getPoolLength = useCallback(async () => {
     try {
-      const totalPools = await contractClient.getPoolCount();
-      setTotalPools(totalPools);
+      const poolCount = await contractClient.getPoolCount();
+      setTotalPools(poolCount);
     } catch (error) {
       console.error("Error fetching total pools:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       setError(`Failed to fetch total pools count: ${errorMessage}`);
     }
-  };
+  }, [contractClient]);
 
-  const loadMorePools = async () => {
+  const loadMorePools = useCallback(async () => {
     if (loadedTokens >= totalPools || isLoadingMore || allPoolsLoaded) return; // No more pools to load
     
     setIsLoadingMore(true);
     try {
       const newPools = await contractClient.getPools(
         loadedTokens,
-        ITEMS_PER_PAGE
+        (ITEMS_PER_PAGE >= totalPools) ? totalPools-1 : ITEMS_PER_PAGE  
       );
       setTokens((prev) => [...prev, ...newPools]);
       setLoadedTokens((prev) => prev + newPools.length);
@@ -69,13 +68,13 @@ export function TokenList() {
     } finally {
       setIsLoadingMore(false);
     }
-  };
+  }, [contractClient, loadedTokens, totalPools, isLoadingMore, allPoolsLoaded]);
 
   const debouncedSearch = useCallback(
     debounce((value: string) => {
-      search;
+      setSearch(value);
     }, 300),
-    [search]
+    []
   );
 
   const filteredTokens = useMemo(() => {
@@ -102,7 +101,7 @@ export function TokenList() {
       }
     };
     init();
-  }, []);
+  }, [getPoolLength, loadMorePools]);
 
   // Intersection Observer for infinite scrolling
   useEffect(() => {
@@ -128,12 +127,7 @@ export function TokenList() {
         observer.unobserve(observerRef.current);
       }
     };
-  }, [isLoadingMore, allPoolsLoaded, loadedTokens, totalPools, search]);
-
-  // Reset state when search changes
-  useEffect(() => {
-    debouncedSearch(search);
-  }, [search, debouncedSearch]);
+  }, [isLoadingMore, allPoolsLoaded, search, loadMorePools]);
 
   if (error) {
     return (

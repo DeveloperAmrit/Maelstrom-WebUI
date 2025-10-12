@@ -10,40 +10,34 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronDown } from "lucide-react";
-import {  Tokens } from "@/lib/mock-api";
 import { Token } from "@/types/token";
-
-export type ExchangeRates = {
-  dai: number;
-  usdc: number;
-  wbtc: number;
-};
-
-
+import { RowPool } from "@/types/pool";
 
 interface TokenSelectorProps {
   selectedToken: Token | undefined;
+  Tokens: RowPool[];
   onTokenChange: (token: Token) => Promise<void>;
 }
 
 export function TokenSelector({
   selectedToken,
+  Tokens,
   onTokenChange,
 }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const selectedTokenData = Tokens.find(
-    (token) => token === selectedToken
-  );
+    (token) => token.token === selectedToken
+  )?.token;
   const filteredTokens = Tokens.filter(
     (token) =>
-      token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      token.name.toLowerCase().includes(searchQuery.toLowerCase())
+      token.token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      token.token.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleTokenSelect = (token: Token) => {
-    onTokenChange(token);
+  const handleTokenSelect = async (token: Token) => {
+    await onTokenChange(token);
     setIsOpen(false);
     setSearchQuery("");
   };
@@ -88,22 +82,22 @@ export function TokenSelector({
             <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {filteredTokens.map((token) => (
                 <Button
-                  key={token.symbol}
+                  key={token.token.symbol}
                   variant="ghost"
-                  onClick={() => handleTokenSelect(token)}
+                  onClick={() => handleTokenSelect(token.token)}
                   className="w-full h-auto p-3 justify-start hover:bg-accent/10"
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
                         <span className="text-sm font-bold text-accent">
-                          {token.symbol.toUpperCase().charAt(0)}
+                          {token.token.symbol.toUpperCase().charAt(0)}
                         </span>
                       </div>
                       <div className="text-left">
-                        <p className="font-medium">{token.symbol.toUpperCase()}</p>
+                        <p className="font-medium">{token.token.symbol.toUpperCase()}</p>
                         <p className="text-xs text-muted-foreground">
-                          {token.name}
+                          {token.token.name}
                         </p>
                       </div>
                     </div>

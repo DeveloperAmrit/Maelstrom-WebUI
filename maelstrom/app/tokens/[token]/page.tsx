@@ -42,7 +42,7 @@ export default function TokenPage() {
         const pool = await contractClient.getPool(token, address);
         setPool(pool);
       } catch (error) {
-        setError("Failed to fetch token or pool data.");
+        setError("Failed to fetch token or pool data." + (error as Error).message);
         console.error("Error fetching token or pool data:", error);
         return;
       } finally {
@@ -50,7 +50,7 @@ export default function TokenPage() {
       }
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   if (error) {
     return (

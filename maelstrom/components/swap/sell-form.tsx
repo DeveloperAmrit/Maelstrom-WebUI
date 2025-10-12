@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { TokenSelector, ExchangeRates } from "./token-selector";
+import { TokenSelector } from "./token-selector";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
 import { useTrade } from "@/hooks/use-mock-api";
 import { useToast } from "@/hooks/use-toast";
@@ -12,8 +12,22 @@ import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
 import { ETH, Token } from "@/types/token";
 import { SellRequest, SellResult } from "@/types/trades";
+import { RowPool } from "@/types/pool";
+import { formatEther } from "viem";
 
-export function SellForm() {
+interface SellFormProps {
+  tokens: RowPool[];
+  handleTokenInChange: (token: Token) => Promise<void>;
+  sellPrice: string;
+  isFetchingRates: boolean;
+}
+
+export function SellForm({
+  tokens,
+  handleTokenInChange,
+  sellPrice,
+  isFetchingRates,
+}: SellFormProps) {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const contractClient = new ContractClient(
@@ -23,43 +37,28 @@ export function SellForm() {
   );
   const [ethAmount, setEthAmount] = useState("");
   const [token, setToken] = useState<Token | undefined>(undefined);
-  const [tokenSellPrice, setTokenSellPrice] = useState<bigint>(BigInt(0));
   const [tokenAmount, setTokenAmount] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [isEthInput, setIsEthInput] = useState(false);
   const { executeSell, loading } = useTrade();
   const { toast } = useToast();
   const [isSwapping, setIsSwapping] = useState(false);
-  const [isFetchingRates, setIsFetchingRates] = useState(false);
 
   const handleInputTokenChange = async (token: Token) => {
     setToken(token);
-    if (!token) return;
-    try {
-      setIsFetchingRates(true);
-      const sellPrice = await contractClient.getSellPrice(token);
-      setTokenSellPrice(BigInt(sellPrice));
-    } catch (error) {
-      console.error("Error fetching price:", error);
-      toast({
-        title: "Error fetching price",
-        description: (error as Error).message,
-      });
-    } finally {
-      setIsFetchingRates(false);
-    }
+    await handleTokenInChange(token);
   };
 
   const handleInputChange = (value: string) => {
     if (!token) return;
     if (!isEthInput) {
       setTokenAmount(value);
-      const ethValue = Number(BigInt(value) * BigInt(tokenSellPrice));
-      setEthAmount(ethValue.toFixed(3));
+      const ethValue = String(Number(value) * Number(formatEther(BigInt(sellPrice))));
+      setEthAmount(ethValue);
     } else {
       setEthAmount(value);
-      const tokenValue = Number(BigInt(value) / BigInt(tokenSellPrice));
-      setTokenAmount(tokenValue.toFixed(3));
+      const tokenValue = String(Number(value) / Number(formatEther(BigInt(sellPrice))));
+      setTokenAmount(tokenValue);
     }
   };
 
@@ -157,6 +156,7 @@ export function SellForm() {
               />
               <div className="ml-2">
                 <TokenSelector
+                  Tokens={tokens}
                   selectedToken={token}
                   onTokenChange={handleInputTokenChange}
                 />
@@ -187,6 +187,7 @@ export function SellForm() {
               />
               <div className="ml-2">
                 <TokenSelector
+                  Tokens={tokens}
                   selectedToken={token}
                   onTokenChange={handleInputTokenChange}
                 />

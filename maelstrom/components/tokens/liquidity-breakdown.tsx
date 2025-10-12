@@ -11,13 +11,13 @@ interface LiquidityBreakdownProps {
 export function LiquidityBreakdown({ poolData }: LiquidityBreakdownProps) {
   const APR = poolData.apr;
   const symbol = poolData.token.symbol;
-  const avgPrice = Number(formatEther(BigInt(poolData.avgPrice))).toFixed(3);
-  const tokenReserve = Number(formatEther(BigInt(poolData.reserve.tokenReserve))).toFixed(3);
-  const ethReserve = Number(formatEther(BigInt(poolData.reserve.tokenReserve))).toFixed(3);
+  const avgPrice = Number(formatEther(BigInt(poolData.avgPrice))).toFixed(8).replace(/\.?0+$/, '');
+  const tokenReserve = Number(formatEther(BigInt(poolData.reserve.tokenReserve))).toFixed(8).replace(/\.?0+$/, '');
+  const ethReserve = Number(formatEther(BigInt(poolData.reserve.ethReserve))).toFixed(8).replace(/\.?0+$/, '');
   const ethPrice = 4008.92; //Mocked for now
-  const tokenReserveValue = Number(avgPrice) * Number(tokenReserve) * ethPrice;
-  const ethReserveValue = Number(ethReserve) * ethPrice;
-  const tokenPercentage = tokenReserveValue / (tokenReserveValue + ethReserveValue) * 100;
+  const tokenReserveValue = Number((Number(avgPrice) * Number(tokenReserve) * ethPrice).toFixed(8)).toString().replace(/\.?0+$/, '');
+  const ethReserveValue = Number((Number(ethReserve) * ethPrice).toFixed(8)).toString().replace(/\.?0+$/, '');
+  const tokenPercentage = Number((Number(tokenReserveValue) / (Number(tokenReserveValue) + Number(ethReserveValue)) * 100).toFixed(2));
   const ethPercentage = 100 - tokenPercentage;
   return (
     <Card className="relative overflow-hidden border-0 h-full flex flex-col">

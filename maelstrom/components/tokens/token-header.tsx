@@ -18,9 +18,9 @@ export function TokenHeader({ token }: TokenHeaderProps) {
       {/* Content */}
       <div className="relative flex items-start gap-3">
         {/* Enhanced token icon */}
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent-500 to-primary-600 p-[1px]">
-          <div className="w-full h-full rounded-xl bg-gradient-to-br from-background-900 to-background-800 flex items-center justify-center">
-            <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-accent-500 to-primary-500">
+        <div className="w-12 h-12 rounded-xl p-[1px]">
+          <div className="w-full h-full rounded-full bg-blue-500 flex items-center justify-center">
+            <span className="text-xl font-bold bg-gradient-to-br from-accent-500 to-primary-500">
               {token.symbol.charAt(0).toUpperCase()}
             </span>
           </div>

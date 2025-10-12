@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
-import { useTrade } from "@/hooks/use-mock-api";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowDownUp } from "lucide-react";
 import { TokenSelector } from "./token-selector";
@@ -13,8 +12,22 @@ import { usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
 import { ETH } from "@/types/token";
+import { RowPool } from "@/types/pool";
+import { formatEther } from "viem";
 
-export function BuyForm() {
+interface BuyFormProps {
+  tokens: RowPool[];
+  handleTokenOutChange: (token: Token) => Promise<void>;
+  buyPrice: string;
+  isFetchingRates: boolean;
+}
+
+export function BuyForm({
+  tokens,
+  handleTokenOutChange,
+  buyPrice,
+  isFetchingRates
+}: BuyFormProps) {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const contractClient = new ContractClient(
@@ -27,43 +40,29 @@ export function BuyForm() {
   const [showPreview, setShowPreview] = useState(false);
   const [isEthInput, setIsEthInput] = useState(true);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [isFetchingRates, setIsFetchingRates] = useState(false);
-  const [buyPrice, setBuyPrice] = useState<bigint>(BigInt(0));
   const { toast } = useToast();
   const [token, setToken] = useState<Token | undefined>(undefined);
 
   const handleTokenChange = async (selctedToken: Token) => {
     setToken(selctedToken);
-    if (!selctedToken) return;
-    setIsFetchingRates(true);
-    try {
-      const price = await contractClient.getBuyPrice(selctedToken);
-      setBuyPrice(BigInt(price));
-    } catch (error) {
-      console.error("Error fetching price:", error);
-      toast({
-        title: "Error fetching price",
-        description: (error as Error).message,
-      });
-    } finally {
-      setIsFetchingRates(false);
-    }
+    await handleTokenOutChange(selctedToken);
   };
 
   const handleInputChange = async (value: string) => {
+    console.log(value);
     if (!token) return;
     if (!isEthInput) {
       setTokenAmount(value);
-      const ethValue = Number(BigInt(value) * BigInt(buyPrice));
-      setEthAmount(ethValue.toFixed(6));
+      const ethValue = String(Number(value) * Number(formatEther(BigInt(buyPrice))));
+      setEthAmount(ethValue);
+    
     } else {
       setEthAmount(value);
-      if (buyPrice === BigInt(0)) {
+      if (Number(buyPrice) === Number(0)) {
         await handleTokenChange(token);
       }
-      console.log(buyPrice);
-      const tokenValue = Number(BigInt(value) / BigInt(buyPrice));
-      setTokenAmount(tokenValue.toFixed(6));
+      const tokenValue = String(Number(value) / Number(formatEther(BigInt(buyPrice))));
+      setTokenAmount(tokenValue);
     }
   };
 
@@ -139,6 +138,7 @@ export function BuyForm() {
           {!isEthInput && (
             <div className="ml-2">
               <TokenSelector
+                Tokens={tokens}
                 selectedToken={token}
                 onTokenChange={handleTokenChange}
               />
@@ -171,7 +171,7 @@ export function BuyForm() {
             type="text"
             inputMode="decimal"
             placeholder="0"
-            value={isEthInput ? tokenAmount : ethAmount}
+            value={isEthInput ? (tokenAmount) : ethAmount}
             disabled={!token && isSwapping && isFetchingRates}
             readOnly
             className="w-full bg-transparent text-4xl font-medium outline-none placeholder:text-white/20 
@@ -181,6 +181,7 @@ export function BuyForm() {
           {isEthInput && (
             <div className="ml-2">
               <TokenSelector
+                Tokens={tokens}
                 selectedToken={token}
                 onTokenChange={handleTokenChange}
               />
@@ -210,7 +211,7 @@ export function BuyForm() {
           disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:text-white/50
           border border-white/[0.05] backdrop-blur-sm font-plus-jakarta text-base"
       >
-        {(isSwapping || isFetchingRates) ? (
+        {isSwapping || isFetchingRates ? (
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/20 border-t-white" />
         ) : (
           `Preview Buy`
