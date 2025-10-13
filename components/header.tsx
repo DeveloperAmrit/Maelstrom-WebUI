@@ -3,10 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletModal } from "@/components/wallet-modal";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const navigation = [
   { name: "Swap", href: "/swap" },
@@ -29,10 +29,13 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
             <div className="relative">
-              <img
+              <Image
                 src="/logo_maelstrom.svg"
                 alt="Maelstrom Logo"
-                className="h-8 w-8 transition-all duration-300 group-hover:scale-110 dark:invert"
+                className="dark:invert"
+                width={"50"}
+                height={"50"}
+                objectFit="contain"
               />
             </div>
             <span className="text-xl font-bold gradient-text">Maelstrom</span>
@@ -63,7 +66,6 @@ export function Header() {
 
           {/* Right side actions */}
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
             <ConnectButton accountStatus={"address"} showBalance={false} />
           </div>
         </div>

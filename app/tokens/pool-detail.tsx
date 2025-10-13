@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/header";
 import { TokenHeader } from "@/components/tokens/token-header";
 import { TokenPairStats } from "@/components/tokens/token-pair-stats";
 import { LiquidityBreakdown } from "@/components/tokens/liquidity-breakdown";
@@ -65,7 +64,6 @@ export default function TokenPage({ tokenAddress }: TokenPageProps) {
 
   return (
     <div className="min-h-screen relative bg-gradient-pattern overflow-hidden ">
-      <Header />
       <main className="container relative mx-auto px-4 py-8">
         {loading ? (
           <TokenPageSkeleton />

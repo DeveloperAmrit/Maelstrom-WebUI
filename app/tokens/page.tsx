@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/header";
 import { TokenList } from "@/components/tokens/TokenList";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
@@ -14,7 +13,6 @@ export default function TokensPage() {
   }
   return (
     <div className="min-h-screen overflow-hidden bg-gradient-pattern relative">
-      <Header />
       <main className="container mx-auto px-4 py-8 relative">
         <div className="max-w-screen-xl mx-auto space-y-8">
           {/* Page Header */}

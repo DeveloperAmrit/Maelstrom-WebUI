@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/header";
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { PoolsTable } from "@/components/dashboard/pools-table";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
@@ -156,9 +155,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen relative bg-gradient-pattern overflow-hidden">
-      {/* Enhanced background effects */}
-      <Header />
-
       <main className="container relative mx-auto px-4 py-8">
         <div className="space-y-8">
           {/* Page Header with glass effect */}

@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -161,9 +160,6 @@ export default function CreatePoolPage() {
 
   return (
     <div className="min-h-screen relative bg-gradient-pattern overflow-hidden">
-      {/* Enhanced background effects */}
-      <Header />
-
       <main className="container relative mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Page Header with glass effect */}
