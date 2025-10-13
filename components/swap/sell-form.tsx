@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TokenSelector } from "./token-selector";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ArrowDownUp } from "lucide-react";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
@@ -39,7 +39,6 @@ export function SellForm({
   const [tokenAmount, setTokenAmount] = useState("");
   const [showPreview, setShowPreview] = useState(false);
   const [isEthInput, setIsEthInput] = useState(false);
-  const { toast } = useToast();
   const [isSwapping, setIsSwapping] = useState(false);
 
   const handleInputTokenChange = async (token: Token) => {
@@ -51,11 +50,15 @@ export function SellForm({
     if (!token) return;
     if (!isEthInput) {
       setTokenAmount(value);
-      const ethValue = String(Number(value) * Number(formatEther(BigInt(sellPrice))));
+      const ethValue = String(
+        Number(value) * Number(formatEther(BigInt(sellPrice)))
+      );
       setEthAmount(ethValue);
     } else {
       setEthAmount(value);
-      const tokenValue = String(Number(value) / Number(formatEther(BigInt(sellPrice))));
+      const tokenValue = String(
+        Number(value) / Number(formatEther(BigInt(sellPrice)))
+      );
       setTokenAmount(tokenValue);
     }
   };
@@ -66,10 +69,7 @@ export function SellForm({
 
   const handlePreview = () => {
     if (!ethAmount || !tokenAmount) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter an amount to sell",
-      });
+      toast.error("Invalid Amount: Please enter an amount to sell");
       return;
     }
     setShowPreview(true);
@@ -85,15 +85,13 @@ export function SellForm({
 
     const result: SellResult = await contractClient.sell(sellRequest);
     if (result.success) {
-      toast({
-        title: "Sell Successful!",
-        description: `Tx Hash ${result.txHash}`,
-      });
+      toast.success(`Swap Successful! Tx Hash: ${result.txHash}`);
     } else {
-      toast({
-        title: "Sell Failed",
-        description: `Error: ${result.error}`,
-      });
+      toast.error(
+        `Swap Failed!: ${
+          result.error || "An error occurred during the swap process."
+        }`
+      );
     }
     setIsSwapping(false);
     if (result) {

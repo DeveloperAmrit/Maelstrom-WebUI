@@ -14,19 +14,24 @@ export const metadata: Metadata = {
   generator: "maelstrom-ui",
   keywords: ["DeFi", "trading", "liquidity", "blockchain", "swap", "tokens"],
   authors: [{ name: "Maelstrom Team" }],
+  icons: {
+    icon: [{ url: "/logo_maelstrom.svg", type: "image/svg+xml" }],
+    shortcut: "/logo_maelstrom.svg",
+    apple: "/logo_maelstrom.svg",
+  },
   openGraph: {
     title: "Maelstrom",
     description:
       "Experience fluid, innovative DeFi trading with advanced liquidity mechanics.",
     type: "website",
-    images: ["/public/logo_maelstrom.svg"],
+    images: ["/logo_maelstrom.svg"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Maelstrom",
     description:
       "Experience fluid, innovative DeFi trading with advanced liquidity mechanics.",
-    images: ["/public/logo_maelstrom.svg"],
+    images: ["/logo_maelstrom.svg"],
   },
 };
 

@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { WalletModal } from "@/components/wallet-modal";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -16,7 +14,6 @@ const navigation = [
 ];
 
 export function Header() {
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -70,11 +67,6 @@ export function Header() {
           </div>
         </div>
       </header>
-
-      <WalletModal
-        isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
-      />
     </>
   );
 }

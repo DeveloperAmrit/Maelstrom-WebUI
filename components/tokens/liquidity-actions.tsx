@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { LiquidityPreviewModal } from "./liquidity-preview-modal";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { LiquidityPoolToken, Token } from "@/types/token";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
@@ -39,7 +39,6 @@ export function LiquidityActions({
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentTab, setCurrentTab] = useState<"add" | "remove">("add");
-  const { toast } = useToast();
 
   const handleTokenAmountChange = useCallback(
     (value: string) => {
@@ -89,21 +88,13 @@ export function LiquidityActions({
       if (!depositResult.success) {
         throw new Error(depositResult.error || "Deposit failed");
       }
-      toast({
-        title: "Success",
-        description: `TxHash: ${depositResult.txHash}`,
-      });
-      // Reset form after successful transaction
+      toast.success(`Deposit Successful! Tx Hash: ${depositResult.txHash}`);
       setTokenAmount("");
       setEthAmount("");
       setLpAmount("");
       setShowPreview(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to process liquidity operation",
-      });
-      console.error(error);
+      toast.error(`Error: ${error || 'Failed to process liquidity operation'}`);
     } finally {
       setLoading(false);
     }
@@ -121,20 +112,14 @@ export function LiquidityActions({
       if (!withdrawResult.success) {
         throw new Error(withdrawResult.error || "Deposit failed");
       }
-      toast({
-        title: "Success",
-        description: `TxHash: ${withdrawResult.txHash}`,
-      });
+      toast.success(`Withdraw Successful! Tx Hash: ${withdrawResult.txHash}`);
       // Reset form after successful transaction
       setTokenAmount("");
       setEthAmount("");
       setLpAmount("");
       setShowPreview(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to process liquidity operation",
-      });
+      toast.error(`Error: ${error || 'Failed to process liquidity operation'}`);
       console.error(error);
     } finally {
       setLoading(false);

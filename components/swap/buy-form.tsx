@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ArrowDownUp } from "lucide-react";
 import { TokenSelector } from "./token-selector";
 import { Token } from "@/types/token";
@@ -26,7 +26,7 @@ export function BuyForm({
   tokens,
   handleTokenOutChange,
   buyPrice,
-  isFetchingRates
+  isFetchingRates,
 }: BuyFormProps) {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
@@ -40,7 +40,6 @@ export function BuyForm({
   const [showPreview, setShowPreview] = useState(false);
   const [isEthInput, setIsEthInput] = useState(true);
   const [isSwapping, setIsSwapping] = useState(false);
-  const { toast } = useToast();
   const [token, setToken] = useState<Token | undefined>(undefined);
 
   const handleTokenChange = async (selctedToken: Token) => {
@@ -53,15 +52,18 @@ export function BuyForm({
     if (!token) return;
     if (!isEthInput) {
       setTokenAmount(value);
-      const ethValue = String(Number(value) * Number(formatEther(BigInt(buyPrice))));
+      const ethValue = String(
+        Number(value) * Number(formatEther(BigInt(buyPrice)))
+      );
       setEthAmount(ethValue);
-    
     } else {
       setEthAmount(value);
       if (Number(buyPrice) === Number(0)) {
         await handleTokenChange(token);
       }
-      const tokenValue = String(Number(value) / Number(formatEther(BigInt(buyPrice))));
+      const tokenValue = String(
+        Number(value) / Number(formatEther(BigInt(buyPrice)))
+      );
       setTokenAmount(tokenValue);
     }
   };
@@ -72,10 +74,7 @@ export function BuyForm({
 
   const handlePreview = () => {
     if (!ethAmount || !tokenAmount || !token) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter an amount to swap",
-      });
+      toast.success("Invalid Amount: Please enter an amount to buy");
       return;
     }
     setShowPreview(true);
@@ -90,16 +89,13 @@ export function BuyForm({
     };
     const result: BuyResult = await contractClient.buy(request);
     if (result.success) {
-      toast({
-        title: "Buy Successful!",
-        description: `Tx Hash: ${result.txHash}`,
-      });
+      toast.success(`Swap Successful! Tx Hash: ${result.txHash}`);
     } else {
-      toast({
-        title: "Buy Failed",
-        description:
-          result.error || "An error occurred during the buy process.",
-      });
+      toast.error(
+        `Swap Failed!: ${
+          result.error || "An error occurred during the swap process."
+        }`
+      );
     }
     setIsSwapping(false);
     if (result) {
@@ -171,7 +167,7 @@ export function BuyForm({
             type="text"
             inputMode="decimal"
             placeholder="0"
-            value={isEthInput ? (tokenAmount) : ethAmount}
+            value={isEthInput ? tokenAmount : ethAmount}
             disabled={!token && isSwapping && isFetchingRates}
             readOnly
             className="w-full bg-transparent text-4xl font-medium outline-none placeholder:text-white/20 

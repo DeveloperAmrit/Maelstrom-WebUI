@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TokenSelector } from "@/components/swap/token-selector";
 import { SwapPreviewModal } from "@/components/swap/swap-preview-modal";
@@ -8,13 +8,13 @@ import { BuyForm } from "@/components/swap/buy-form";
 import { SellForm } from "@/components/swap/sell-form";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ArrowDownUp, Settings } from "lucide-react";
 import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { Token } from "@/types/token";
-import { SwapRequest } from "@/types/trades";
+import { BuyRequest, SellRequest, SwapRequest } from "@/types/trades";
 import { ETH_ROW_POOL, RowPool } from "@/types/pool";
 import { parseEther } from "viem";
 
@@ -42,16 +42,16 @@ export function SwapInterface() {
     amountOut: "",
     exchangeRate: "",
   });
-  const [error, setError] = useState<string | null>(null);
   const [tokens, setTokens] = useState<RowPool[]>([ETH_ROW_POOL]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadedTokens, setLoadedTokens] = useState<number>(0);
+  const [tokensInitialized, setTokensInitialized] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [tokenInSellPrice, setTokenInSellPrice] = useState<number>(0);
   const [tokenOutBuyPrice, setTokenOutBuyPrice] = useState<number>(0);
   const [fetchingRates, setFetchingRates] = useState(false);
   const [slippageTolerance, setSlippageTolerance] = useState<number>(0.5); // Default 0.5%
-  const { toast } = useToast();
 
   const calculateOutput = (amount: string, isInput: boolean) => {
     if (!amount || !tokenInSellPrice || !tokenOutBuyPrice) return "";
@@ -158,9 +158,7 @@ export function SwapInterface() {
 
   const handleSwapTokens = async () => {
     if (!swapState.tokenOut || !swapState.tokenIn) return;
-
     setIsSwapping(true);
-
     try {
       // Store the current tokens before swapping
       const currentTokenIn = swapState.tokenIn;
@@ -192,10 +190,7 @@ export function SwapInterface() {
       !swapState.tokenIn ||
       !swapState.tokenOut
     ) {
-      toast({
-        title: "Invalid Amount",
-        description: "Please enter an amount to swap",
-      });
+      toast.error(`Invalid Amount: Please enter an amount to swap`);
       return;
     }
     setShowPreview(true);
@@ -203,17 +198,56 @@ export function SwapInterface() {
 
   const handleConfirmSwap = async () => {
     if (!swapState.tokenIn || !swapState.tokenOut) {
-      toast({
-        title: "Select Tokens",
-        description: "Please select both input and output tokens.",
-      });
+      toast.error(`Select Tokens: Please select both input and output tokens.`);
       return;
     }
+    setLoading(true);
 
     // Calculate minimum tokens out with slippage tolerance
     const amountOutNum = parseFloat(swapState.amountOut);
     const slippageMultiplier = (100 - slippageTolerance) / 100;
     const minimumTokenOut = (amountOutNum * slippageMultiplier).toString();
+
+    if (
+      swapState.tokenIn.symbol == "ETH" ||
+      swapState.tokenOut.symbol == "ETH"
+    ) {
+      if (swapState.tokenIn.symbol == "ETH") {
+        const buyRequest: BuyRequest = {
+          token: swapState.tokenOut,
+          amountIn: parseEther(swapState.amountIn).toString(),
+        };
+        const result = await contractClient.buy(buyRequest);
+        if (result.success) {
+          toast.success(`Swap Successful! Tx Hash: ${result.txHash}`);
+        } else {
+          toast.error(
+            `Swap Failed!: ${
+              result.error || "An error occurred during the swap process."
+            }`
+          );
+        }
+        return;
+      }
+
+      if (swapState.tokenOut.symbol == "ETH") {
+        const sellRequest: SellRequest = {
+          token: swapState.tokenIn,
+          amountIn: parseEther(swapState.amountIn).toString(),
+        };
+        const result = await contractClient.sell(sellRequest);
+        if (result.success) {
+          toast.success(`Swap Successful! Tx Hash: ${result.txHash}`);
+        } else {
+          toast.error(
+            `Swap Failed!: ${
+              result.error || "An error occurred during the swap process."
+            }`
+          );
+        }
+        return;
+      }
+    }
 
     const swapRequest: SwapRequest = {
       tokenIn: swapState.tokenIn,
@@ -223,17 +257,15 @@ export function SwapInterface() {
     };
     const result = await contractClient.swap(swapRequest);
     if (result.success) {
-      toast({
-        title: "Swap Successful!",
-        description: `Tx Hash: ${result.txHash}`,
-      });
+      toast.success(`Swap Successful! Tx Hash: ${result.txHash}`);
     } else {
-      toast({
-        title: "Swap Failed",
-        description:
-          result.error || "An error occurred during the swap process.",
-      });
+      toast.error(
+        `Swap Failed!: ${
+          result.error || "An error occurred during the swap process."
+        }`
+      );
     }
+    setLoading(false);
     setShowPreview(false);
   };
 
@@ -246,14 +278,23 @@ export function SwapInterface() {
       console.error("Error fetching total pools:", error);
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      setError(`Failed to fetch total pools count: ${errorMessage}`);
+      toast.error(`Failed to fetch total pools count: ${errorMessage}`);
       return 0;
     }
   };
 
   const loadAllPools = async (totalPoolsCount: number) => {
+    // Skip if we've already loaded the correct number of tokens
+    if (tokensInitialized && loadedTokens === totalPoolsCount) return;
+
     try {
+      // Reset tokens to initial state (only ETH_ROW_POOL) before loading
+      setTokens([ETH_ROW_POOL]);
+      setTokensInitialized(false);
+
       let currentLoaded = 0;
+      let allPools: RowPool[] = [ETH_ROW_POOL];
+
       while (currentLoaded < totalPoolsCount) {
         const startIndex = currentLoaded;
         const endIndex = Math.min(
@@ -262,34 +303,42 @@ export function SwapInterface() {
         );
         const newPools = await contractClient.getPools(startIndex, endIndex);
         if (newPools.length === 0) break; // No more pools to load
-        setTokens((prev) => [...prev, ...newPools]);
+
+        allPools = [...allPools, ...newPools];
+        setTokens(allPools);
         currentLoaded += newPools.length;
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
+
+      setTokensInitialized(true);
     } catch (error) {
       console.error("Error loading pools:", error);
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      setError(`Failed to load pools: ${errorMessage}`);
+      toast.error(`Failed to load pools: ${errorMessage}`);
     }
   };
 
   useEffect(() => {
     const init = async () => {
-      setIsLoading(true);
+      // Skip initialization if tokens are already loaded
+      if (tokensInitialized) return;
+
+      setLoading(true);
       try {
         const poolCount = await getPoolLength();
         await loadAllPools(poolCount);
+        setLoadedTokens(poolCount);
       } catch (err) {
         console.error("Initialization failed:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
-        setError(`Failed to initialize token list: ${errorMessage}`);
+        toast.error(`Failed to initialize token list: ${errorMessage}`);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     init();
-  }, []);
+  }, [tokensInitialized]);
 
   return (
     <div className="w-full max-w-md mx-auto p-4">
@@ -363,6 +412,7 @@ export function SwapInterface() {
                       variant="ghost"
                       size="sm"
                       onClick={handleSwapTokens}
+                      disabled={isSwapping || fetchingRates}
                       className="h-12 w-12 rounded-2xl bg-gradient-to-b from-accent-cyan/20 to-primary-600/20 hover:from-accent-cyan/30 hover:to-primary-600/30
                         border border-white/10 p-0 shadow-lg hover:shadow-accent-cyan/20 transition-all duration-300 backdrop-blur-sm"
                     >
@@ -475,7 +525,7 @@ export function SwapInterface() {
                     !swapState.amountIn ||
                     !swapState.amountOut ||
                     isSwapping ||
-                    isLoading
+                    loading
                   }
                   className="w-full h-14 mt-6 bg-gradient-to-r from-accent-cyan to-primary-500 hover:from-accent-cyan/90 hover:to-primary-500/90 
                     text-white font-semibold rounded-xl shadow-lg hover:shadow-accent-cyan/25 transition-all duration-300 
@@ -518,7 +568,7 @@ export function SwapInterface() {
             tokenOut={swapState.tokenOut!}
             amountIn={swapState.amountIn}
             amountOut={swapState.amountOut}
-            loading={isSwapping}
+            loading={loading}
             slippageTolerance={slippageTolerance}
           />
         </div>

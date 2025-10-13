@@ -11,7 +11,7 @@ import { InitPool } from "@/types/pool";
 import { useState } from "react";
 import { toast } from "sonner";
 import { parseEther, isAddress, Address } from "viem";
-import { Loader2, Plus, DollarSign, Coins } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 export default function CreatePoolPage() {
   const { writeContractAsync } = useWriteContract();
@@ -222,7 +222,6 @@ export default function CreatePoolPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="ethAmount" className="text-white flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
                       ETH Amount
                     </Label>
                     <Input
@@ -237,7 +236,6 @@ export default function CreatePoolPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="tokenAmount" className="text-white flex items-center gap-2">
-                      <Coins className="h-4 w-4" />
                       Token Amount
                     </Label>
                     <Input
