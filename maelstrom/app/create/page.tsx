@@ -11,7 +11,7 @@ import { CONTRACT_ADDRESS } from "@/types/contract";
 import { InitPool } from "@/types/pool";
 import { useState } from "react";
 import { toast } from "sonner";
-import { parseEther, isAddress } from "viem";
+import { parseEther, isAddress, Address } from "viem";
 import { Loader2, Plus, DollarSign, Coins } from "lucide-react";
 
 export default function CreatePoolPage() {
@@ -22,7 +22,7 @@ export default function CreatePoolPage() {
     writeContractAsync,
     publicClient
   );
-  const { address, isConnected } = useAccount();
+  const { isConnected } = useAccount();
 
   const [formData, setFormData] = useState<InitPool>({
     token: "",
@@ -51,7 +51,7 @@ export default function CreatePoolPage() {
 
     setIsValidatingToken(true);
     try {
-      const token = await contractClient.getToken(tokenAddress as any);
+      const token = await contractClient.getToken(tokenAddress as Address);
       setTokenInfo({
         symbol: token.symbol,
         name: token.name,

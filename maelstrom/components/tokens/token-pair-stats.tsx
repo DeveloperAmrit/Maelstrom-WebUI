@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Pool } from "@/types/pool";
-import { formatEther, parseEther } from "viem";
+import { formatEther } from "viem";
 
 interface TokenPairStatsProps {
   poolData: Pool;

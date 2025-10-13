@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Clock, AlertTriangle, Zap } from "lucide-react";
+import { ArrowRight, Clock, Zap } from "lucide-react";
 import { Token } from "@/types/token";
 
 interface SwapPreviewModalProps {
@@ -90,33 +90,34 @@ export function SwapPreviewModal({
               </span>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-accent-cyan" />
-                <span className="text-white/70 font-medium font-plus-jakarta">
-                  Slippage Tolerance
-                </span>
-              </div>
-              <span className="text-white/90 font-medium font-plus-jakarta">
-                {slippageTolerance}%
-              </span>
-            </div>
-
             {slippageTolerance && (
-              <div className="flex items-center justify-between text-sm border-t border-white/[0.05] pt-3">
-                <div className="flex items-center gap-2">
-                  {/* <AlertTriangle className="h-4 w-4 text-orange-400" /> */}
-                  <span className="text-white/70 font-medium font-plus-jakarta">
-                    Minimum Received
+              <div>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-accent-cyan" />
+                    <span className="text-white/70 font-medium font-plus-jakarta">
+                      Slippage Tolerance
+                    </span>
+                  </div>
+                  <span className="text-white/90 font-medium font-plus-jakarta">
+                    {slippageTolerance}%
                   </span>
                 </div>
-                <span className="text-white/90 font-medium font-plus-jakarta">
-                  {(
-                    (parseFloat(amountOut) * (100 - slippageTolerance)) /
-                    100
-                  ).toFixed(6)}{" "}
-                  {tokenOutSymbol}
-                </span>
+                <div className="flex items-center justify-between text-sm border-t border-white/[0.05] pt-3">
+                  <div className="flex items-center gap-2">
+                    {/* <AlertTriangle className="h-4 w-4 text-orange-400" /> */}
+                    <span className="text-white/70 font-medium font-plus-jakarta">
+                      Minimum Received
+                    </span>
+                  </div>
+                  <span className="text-white/90 font-medium font-plus-jakarta">
+                    {(
+                      (parseFloat(amountOut) * (100 - slippageTolerance)) /
+                      100
+                    ).toFixed(6)}{" "}
+                    {tokenOutSymbol}
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { useMockData } from "@/hooks/use-mock-api";
 
 interface Stat {
   portfolioValue: string;

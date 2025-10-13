@@ -77,6 +77,7 @@ export function SellForm({
 
   const handleConfirmSell = async () => {
     if (!token) return;
+    setIsSwapping(true);
     const sellRequest: SellRequest = {
       token: token,
       amountIn: parseEther(tokenAmount).toString(),
@@ -94,6 +95,7 @@ export function SellForm({
         description: `Error: ${result.error}`,
       });
     }
+    setIsSwapping(false);
     if (result) {
       setEthAmount("");
       setTokenAmount("");
@@ -106,7 +108,7 @@ export function SellForm({
       <div className="relative bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md group">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-white/70 font-medium font-plus-jakarta">
-            You're {isEthInput ? "receiving" : "selling"}
+            You&apos;re {isEthInput ? "receiving" : "selling"}
           </span>
           <button
             onClick={handleSwapInputType}
@@ -167,7 +169,7 @@ export function SellForm({
       <div className="relative bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md group">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-white/70 font-medium font-plus-jakarta">
-            You'll {isEthInput ? "sell" : "receive"}
+            You&apos;ll {isEthInput ? "sell" : "receive"}
           </span>
         </div>
         <div className="relative flex items-center bg-black/10 group-hover:bg-black/20 rounded-xl p-4 transition-all duration-300">
@@ -221,7 +223,7 @@ export function SellForm({
 
       <Button
         onClick={handlePreview}
-        disabled={!ethAmount || !tokenAmount || isSwapping}
+        disabled={!ethAmount || !tokenAmount || isSwapping || isFetchingRates}
         className="w-full h-14 mt-6 bg-gradient-to-r from-accent-cyan to-primary-500 hover:from-accent-cyan/90 hover:to-primary-500/90 
           text-white font-semibold rounded-xl shadow-lg hover:shadow-accent-cyan/25 transition-all duration-300 
           disabled:from-gray-600/50 disabled:to-gray-700/50 disabled:cursor-not-allowed disabled:text-white/50

@@ -10,8 +10,7 @@ import { CONTRACT_ADDRESS } from "@/types/contract";
 import { useEffect, useState } from "react";
 import { RowPool } from "@/types/pool";
 import { toast } from "sonner";
-import { set } from "lodash";
-import { formatEther, parseEther } from "viem";
+import { formatEther } from "viem";
 import { Deposit, Withdraw } from "@/types/trades";
 
 export default function DashboardPage() {

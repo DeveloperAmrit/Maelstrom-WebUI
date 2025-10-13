@@ -114,7 +114,7 @@ export function BuyForm({
       <div className="relative bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md group">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-white/70 font-medium font-plus-jakarta">
-            You're {isEthInput ? "paying" : "receiving"}
+            You&apos;re {isEthInput ? "paying" : "receiving"}
           </span>
           <button
             onClick={handleSwapInputType}
@@ -163,7 +163,7 @@ export function BuyForm({
       <div className="relative bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-300 rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md group">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-white/70 font-medium font-plus-jakarta">
-            You'll {isEthInput ? "receive" : "pay"}
+            You&apos;ll {isEthInput ? "receive" : "pay"}
           </span>
         </div>
         <div className="relative flex items-center bg-black/10 group-hover:bg-black/20 rounded-xl p-4 transition-all duration-300">

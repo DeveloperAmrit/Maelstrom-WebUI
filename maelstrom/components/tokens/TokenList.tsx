@@ -3,7 +3,6 @@
 import { TokenRow } from "./TokenRow";
 import { TokenRowSkeleton } from "./TokenRowSkeleton";
 import { TokenSearchBar } from "./TokenSearchBar";
-import { usePools } from "@/hooks/use-pools";
 import { Button } from "@/components/ui/button";
 import { Loader2, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
@@ -19,11 +18,16 @@ const ITEMS_PER_PAGE = 20;
 export function TokenList() {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
-  const contractClient = new ContractClient(
-    CONTRACT_ADDRESS,
-    writeContractAsync,
-    publicClient
-  );
+  
+  // Memoize contractClient to prevent unnecessary re-creation
+  const contractClient = useMemo(() => {
+    return new ContractClient(
+      CONTRACT_ADDRESS,
+      writeContractAsync,
+      publicClient
+    );
+  }, [writeContractAsync, publicClient]);
+  
   const [tokens, setTokens] = useState<RowPool[]>([]);
   const [totalPools, setTotalPools] = useState(0);
   const [initialLoad, setInitialLoad] = useState(true);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +17,7 @@ import { BuyTrade, SellTrade } from "@/types/trades";
 import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
 import { usePublicClient, useWriteContract } from "wagmi";
-import { parseEther, formatEther } from "viem";
+import { formatEther } from "viem";
 import { RefreshCw, Clock, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PriceChartsProps {
@@ -42,24 +42,18 @@ interface BatchConfig {
 export function PriceCharts({ token, pool }: PriceChartsProps) {
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
-
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentBlock, setCurrentBlock] = useState<number>(0);
   const [hasMoreData, setHasMoreData] = useState(true);
-
-  const contractClient = new ContractClient(
-    CONTRACT_ADDRESS,
-    writeContractAsync,
-    publicClient
-  );
-
-  const batchConfig: BatchConfig = {
-    batchSize: 1000, // Blocks per batch
-    maxBatches: 50, // Maximum number of batches total
-    delayBetweenBatches: 100, // ms delay between batches
-  };
+  const contractClient = useMemo(() => {
+    return new ContractClient(
+      CONTRACT_ADDRESS,
+      writeContractAsync,
+      publicClient
+    );
+  }, [writeContractAsync, publicClient]);
 
   const generateChartData = useCallback(
     (buyTrades: BuyTrade[], sellTrades: SellTrade[]): ChartDataPoint[] => {
@@ -154,6 +148,13 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
   const fetchNextBatch = useCallback(async () => {
     if (!hasMoreData || loading) return;
 
+    // Define batch configuration inside the callback
+    const batchConfig: BatchConfig = {
+      batchSize: 1000, // Blocks per batch
+      maxBatches: 50, // Maximum number of batches total
+      delayBetweenBatches: 100, // ms delay between batches
+    };
+
     setLoading(true);
     setError(null);
 
@@ -223,7 +224,6 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
     contractClient,
     token,
     generateChartData,
-    batchConfig,
     currentBlock,
     hasMoreData,
     loading,

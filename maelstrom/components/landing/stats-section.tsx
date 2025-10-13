@@ -46,7 +46,7 @@ export function StatsSection() {
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <Card key={stat.label} className="group text-center border-border/50 bg-card/50 backdrop-blur-sm relative overflow-hidden cursor-pointer">
+            <Card key={index} className="group text-center border-border/50 bg-card/50 backdrop-blur-sm relative overflow-hidden cursor-pointer">
               <RippleEffect color="rgba(124, 58, 237, 0.06)" />
               <CardContent className="p-6 relative">
                 <div className="text-2xl md:text-3xl font-bold text-accent mb-2">

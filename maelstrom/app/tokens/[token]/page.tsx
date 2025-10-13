@@ -7,7 +7,7 @@ import { LiquidityBreakdown } from "@/components/tokens/liquidity-breakdown";
 import { LiquidityActions } from "@/components/tokens/liquidity-actions";
 import { PriceCharts } from "@/components/tokens/price-charts";
 import { TokenPageSkeleton } from "@/components/tokens/token-page-skeleton";
-import { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
@@ -42,7 +42,9 @@ export default function TokenPage() {
         const pool = await contractClient.getPool(token, address);
         setPool(pool);
       } catch (error) {
-        setError("Failed to fetch token or pool data." + (error as Error).message);
+        setError(
+          "Failed to fetch token or pool data." + (error as Error).message
+        );
         console.error("Error fetching token or pool data:", error);
         return;
       } finally {
@@ -78,7 +80,7 @@ export default function TokenPage() {
             {/* Liquidity Breakdown & Actions */}
             <div
               className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in"
-              style={{ "--delay": "200ms" } as any}
+              style={{ "--delay": "200ms" } as CSSProperties}
             >
               <LiquidityBreakdown poolData={pool!} />
               <LiquidityActions
@@ -92,7 +94,7 @@ export default function TokenPage() {
             {/* Price Charts */}
             <div
               className="animate-fade-in"
-              style={{ "--delay": "600ms" } as any}
+              style={{ "--delay": "600ms" } as CSSProperties}
             >
               <PriceCharts token={token!} pool={pool!} />
             </div>

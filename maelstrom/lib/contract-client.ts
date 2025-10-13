@@ -788,7 +788,6 @@ export class ContractClient implements IContractClient {
             const lpTokens = await Promise.all(
                 tokens.map(async (token) => await this.getLPToken(token, user))
             );
-            const userLiquidity = await this.getUserLiquidity(user);
             const result = (tokens || []).map((token, index) => ({
                 token: token,
                 buyPrice: buyPrices[index],

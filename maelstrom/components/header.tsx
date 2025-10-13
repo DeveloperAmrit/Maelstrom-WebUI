@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WalletModal } from "@/components/wallet-modal";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -13,13 +12,7 @@ const navigation = [
   { name: "Swap", href: "/swap" },
   { name: "Tokens", href: "/tokens" },
   { name: "Dashboard", href: "/dashboard" },
-];
-
-const popularTokens = [
-  { symbol: "ETH", name: "Ethereum", href: "/tokens/eth" },
-  { symbol: "DAI", name: "Dai Stablecoin", href: "/tokens/dai" },
-  { symbol: "USDC", name: "USD Coin", href: "/tokens/usdc" },
-  { symbol: "WBTC", name: "Wrapped Bitcoin", href: "/tokens/wbtc" },
+  { name: "Create Pool", href: "/create" },
 ];
 
 export function Header() {

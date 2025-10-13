@@ -254,10 +254,10 @@ export function LiquidityActions({
               )}
             </div>
 
-            {/* "You'll mint" Section */}
+            {/* "You&apos;ll mint" Section */}
             <div className="space-y-4 bg-white/[0.01] rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md">
               <h3 className="text-md font-semibold text-white/90 font-plus-jakarta">
-                You'll mint
+                You&apos;ll mint
               </h3>
 
               <div className="bg-white/[0.02] rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md">
@@ -368,10 +368,10 @@ export function LiquidityActions({
               </div>
             </div>
 
-            {/* "You'll receive" Section */}
+            {/* "You&apos;ll receive" Section */}
             <div className="space-y-4 bg-white/[0.01] rounded-2xl p-5 border border-white/[0.05] shadow-lg backdrop-blur-md">
               <h3 className="text-md font-semibold text-white/90 font-plus-jakarta">
-                You'll receive
+                You&apos;ll receive
               </h3>
 
               {/* Token Pair Outputs - Horizontal Layout */}
