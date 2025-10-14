@@ -100,11 +100,11 @@ export function TokenList() {
       try {
         await getPoolLength();
         await loadMorePools();
-        setInitialLoad(false);
       } catch (err) {
         console.error("Initialization failed:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
         toast.error(`Initialization failed: ${errorMessage}`);
+      } finally {
         setInitialLoad(false);
       }
     };
@@ -152,7 +152,7 @@ export function TokenList() {
     );
   }
 
-  if (filteredTokens.length === 0) {
+  if (filteredTokens.length === 0 && !initialLoad) {
     return (
       <div>
         <div className="mb-6">

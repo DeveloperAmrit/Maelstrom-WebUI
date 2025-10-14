@@ -252,6 +252,10 @@
     animation: slide-up 0.3s ease-out;
   }
 
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
   /* Startup-style liquid animations */
   .animate-liquid-primary {
     animation: liquid-flow-primary 35s ease-in-out infinite;
@@ -768,6 +772,15 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Accessibility and reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .animate-ripple,
@@ -778,6 +791,7 @@
   .animate-pulse-slow,
   .animate-fade-in,
   .animate-slide-up,
+  .animate-shimmer,
   .animate-liquid-primary,
   .animate-liquid-secondary {
     animation: none;

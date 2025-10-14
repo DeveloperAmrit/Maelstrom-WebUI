@@ -3,6 +3,7 @@
 import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 import { PoolsTable } from "@/components/dashboard/pools-table";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
 import { CONTRACT_ADDRESS } from "@/types/contract";
@@ -44,16 +45,18 @@ export default function DashboardPage() {
 
   const fetchUserPools = async (poolCount: number) => {
     if (!address) return;
-    if(poolCount == pools.length) return;
+    if (poolCount === 0) return;
     try {
+      const allPools: RowPool[] = [];
       for (let i = 0; i < Math.ceil(poolCount / POOL_FETCH_LIMIT); i++) {
         const userPools = await contractClient.getUserPools(
           address,
           i * POOL_FETCH_LIMIT,
-          Math.min(POOL_FETCH_LIMIT,poolCount - 1)
+          Math.min(i * POOL_FETCH_LIMIT + POOL_FETCH_LIMIT, poolCount - 1)
         );
-        setPools((prevPools) => [...prevPools, ...userPools]);
+        allPools.push(...userPools);
       }
+      setPools(allPools);
     } catch (error) {
       console.error("Error fetching user pools:", error);
       toast.error("Failed to fetch user pools.");
@@ -96,44 +99,42 @@ export default function DashboardPage() {
     }
   };
 
-  const fetchUserLiquidity = async () => {
-    if (!address) return;
-    try {
-      const liquidity = await contractClient.getUserLiquidity(address);
-      setTotalLiquidity(formatEther(BigInt(liquidity)));
-    } catch (error) {
-      console.error("Error fetching user liquidity:", error);
-      toast.error("Failed to fetch user liquidity.");
-    }
-  };
 
-  const calculatePortfolioValue = () => {
+
+  const calculatePortfolioValue = (poolsData: RowPool[]) => {
     let total = 0;
-    for (const pool of pools) {
+    for (const pool of poolsData) {
       const proportion =
-        BigInt(pool.lpToken!.balance) / BigInt(pool.lpToken!.totalSupply);
+        Number(pool.lpToken!.balance) / Number(pool.lpToken!.totalSupply);
       total += Number(proportion) * Number(pool.totalLiquidity);
     }
-    console.log(pools)
-    setPortfolioValue((formatEther(BigInt(total))));
+    return formatEther(BigInt(total));
   };
 
-  const calculateProfit = () => {
-    const gain =
-      ((Number(portfolioValue) - Number(totalLiquidity)) /
-        Number(totalLiquidity)) *
-      100;
-    setTotalProfit(gain.toFixed(2));
+  const calculateProfit = (portfolio: string, liquidity: string) => {
+    const portfolioNum = Number(portfolio);
+    const liquidityNum = Number(liquidity);
+    if (liquidityNum === 0) return "0.00";
+    const gain = ((portfolioNum - liquidityNum) / liquidityNum) * 100;
+    return gain.toFixed(2);
   };
 
   useEffect(() => {
+    if (!address) return;
+
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        
+        // Fetch all data
         const count = await fetchPoolCount();
-        if(count == undefined) throw new Error("Pool count is undefined");
+        if (count === undefined) throw new Error("Pool count is undefined");
+        
         await fetchUserPools(count);
-        await fetchUserLiquidity();
+        const liquidity = await contractClient.getUserLiquidity(address);
+        const liquidityFormatted = formatEther(BigInt(liquidity));
+        setTotalLiquidity(liquidityFormatted);
+        
         await fetchRecentDeposits();
         await fetchRecentWithdrawals();
         
@@ -144,14 +145,23 @@ export default function DashboardPage() {
         setIsLoading(false);
       }
     };
-    const calculateValues = () => {
-      calculatePortfolioValue();
-      calculateProfit();
-      setIsLoading(false);
-    }
+
     fetchData();
-    calculateValues();
-  },[pools]);
+  }, [address]);
+
+  // Separate effect to calculate values when pools or liquidity changes
+  useEffect(() => {
+    if (pools.length > 0 && totalLiquidity !== "0") {
+      const portfolio = calculatePortfolioValue(pools);
+      setPortfolioValue(portfolio);
+      const profit = calculateProfit(portfolio, totalLiquidity);
+      setTotalProfit(profit);
+    }
+  }, [pools, totalLiquidity]);
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="min-h-screen relative bg-gradient-pattern overflow-hidden">

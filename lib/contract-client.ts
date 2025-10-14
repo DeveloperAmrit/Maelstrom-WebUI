@@ -571,9 +571,9 @@ export class ContractClient implements IContractClient {
             });
             swapLogs.forEach(log => {
                 if (log.tokenIn.address === token.address) {
-                    volume += Number(log.amountIn) * Number(log.sellPrice);
+                    volume += (Number(log.amountIn) * Number(log.sellPrice)) / 1e18;
                 } else if (log.tokenOut.address === token.address) {
-                    volume += Number(log.amountOut) * Number(log.buyPrice);
+                    volume += (Number(log.amountOut) * Number(log.buyPrice)) / 1e18;
                 }
             });
             return volume.toString();

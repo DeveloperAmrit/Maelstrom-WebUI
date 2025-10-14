@@ -20,11 +20,11 @@ export function DashboardOverview({
   const stats = [
     {
       label: "Portfolio Value",
-      value: loading ? "..." : `${portfolioValue} ETH`,
+      value: loading ? "..." : `${Number(portfolioValue).toFixed(8)} ETH`,
     },
     {
       label: "Total Liquidity",
-      value: loading ? "..." : `${totalLiquidity} ETH`,
+      value: loading ? "..." : `${Number(totalLiquidity).toFixed(8)} ETH`,
     },
     {
       label: "Active Pools",

@@ -12,19 +12,19 @@ export function TokenPairStats({ poolData }: TokenPairStatsProps) {
   const stats = [
     {
       label: "24h Volume",
-      value: `${Number(formatEther(BigInt(poolData.volume24h)))} ETH`,
+      value: `${Number(formatEther(BigInt(poolData.volume24h))).toFixed(8)} ETH`,
     },
     {
       label: "Total Liquidity",
-      value: `${formatEther(BigInt(poolData.totalLiquidty))} ETH`,
+      value: `${Number(formatEther(BigInt(poolData.totalLiquidty))).toFixed(8)} ETH`,
     },
     {
       label: "Buy Price",
-      value: `${formatEther(BigInt(poolData.buyPrice))} ETH`,
+      value: `${Number(formatEther(BigInt(poolData.buyPrice))).toFixed(8)} ETH`,
     },
     {
       label: "Sell Price",
-      value: `${formatEther(BigInt(poolData.sellPrice))} ETH`,
+      value: `${Number(formatEther(BigInt(poolData.sellPrice))).toFixed(8)} ETH`,
       change: "Current",
       positive: true,
     },

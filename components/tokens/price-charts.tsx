@@ -282,19 +282,6 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                 : "No More Data"}
             </div>
           </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="border-white/10 hover:border-accent-blue/30 text-white/70 hover:text-accent-blue transition-all duration-300"
-          >
-            <RefreshCw
-              className={`h-3 w-3 mr-1 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
         </div>
       </div>
 
@@ -322,7 +309,6 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                   {currentBuyPrice.toFixed(6)} ETH
                 </p>
                 <div className="flex items-center mt-1 text-xs text-muted-foreground">
-                  <TrendingUp className="h-3 w-3 mr-1" />
                   {chartData.length > 0
                     ? `${chartData.length} data points`
                     : "No data"}
@@ -384,7 +370,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                       }}
                       labelStyle={{ color: "rgb(148, 163, 184)" }}
                       formatter={(value: number) => [
-                        `${value.toFixed(6)} ETH`,
+                        `${value.toFixed(8)} ETH`,
                         "Buy Price",
                       ]}
                     />
@@ -419,7 +405,6 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                   {currentSellPrice.toFixed(6)} ETH
                 </p>
                 <div className="flex items-center mt-1 text-xs text-muted-foreground">
-                  <TrendingDown className="h-3 w-3 mr-1" />
                   {chartData.length > 0
                     ? `${chartData.length} data points`
                     : "No data"}
