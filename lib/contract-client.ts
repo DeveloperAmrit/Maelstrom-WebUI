@@ -136,7 +136,7 @@ export class ContractClient implements IContractClient {
                 address: this.contractAddress,
                 abi: ABI,
                 functionName: 'buy',
-                args: [buyReq.token.address],
+                args: [buyReq.token.address, BigInt(buyReq.minimumAmountToBuy)],
                 value: BigInt(buyReq.amountIn)
             });
             result.txHash = txHash;
@@ -160,7 +160,7 @@ export class ContractClient implements IContractClient {
                 address: this.contractAddress,
                 abi: ABI,
                 functionName: 'sell',
-                args: [sellReq.token.address, BigInt(sellReq.amountIn)]
+                args: [sellReq.token.address, BigInt(sellReq.amountIn), BigInt(sellReq.minimumEthAmount)]
             })
             result.txHash = txHash;
             return result;

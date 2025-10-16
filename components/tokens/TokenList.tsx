@@ -3,7 +3,7 @@
 import { TokenRow } from "./TokenRow";
 import { TokenRowSkeleton } from "./TokenRowSkeleton";
 import { TokenSearchBar } from "./TokenSearchBar";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
 import { ContractClient } from "@/lib/contract-client";
