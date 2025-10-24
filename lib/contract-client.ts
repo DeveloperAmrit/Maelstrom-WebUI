@@ -622,7 +622,7 @@ export class ContractClient implements IContractClient {
                 address: this.contractAddress,
                 fromBlock: BigInt(fromBlock),
                 toBlock: BigInt(toBlock),
-                event: parseAbiItem('event Deposit(address indexed token, address indexed user, uint256 ethAmount, uint256 tokenAmount, uint256 lpTokensMinted)'),
+                event: parseAbiItem('event Deposit(address indexed token, address indexed user, uint256 amountEther, uint256 amountToken, uint256 lpTokensMinted)'),
                 args: {
                     token: (token?.address as Address),
                     user: user as Address | undefined
@@ -639,8 +639,8 @@ export class ContractClient implements IContractClient {
                 )
                 result = (logs || []).map((log, index) => ({
                     token: tokens[index],
-                    ethAmount: log.args.ethAmount.toString(),
-                    tokenAmount: log.args.tokenAmount.toString(),
+                     ethAmount: log.args.amountEther.toString(),
+                    tokenAmount: log.args.amountToken.toString(),
                     lpTokensMinted: log.args.lpTokensMinted.toString(),
                     timestamp: timestamps[index],
                 }));
@@ -648,8 +648,8 @@ export class ContractClient implements IContractClient {
             }
             result = (logs || []).map((log, index) => ({
                 token: token,
-                ethAmount: log.args.ethAmount.toString(),
-                tokenAmount: log.args.tokenAmount.toString(),
+                ethAmount: log.args.amountEther.toString(),
+                tokenAmount: log.args.amountToken.toString(),
                 lpTokensMinted: log.args.lpTokensMinted.toString(),
                 timestamp: timestamps[index],
             }));
@@ -665,7 +665,7 @@ export class ContractClient implements IContractClient {
                 address: this.contractAddress,
                 fromBlock: BigInt(fromBlock),
                 toBlock: BigInt(toBlock),
-                event: parseAbiItem('event withdraw(address indexed token, address indexed user, uint256 ethAmount, uint256 tokenAmount, uint256 lpTokensBurned)'),
+                event: parseAbiItem('event Withdraw(address indexed token, address indexed user, uint256 amountEther, uint256 amountToken, uint256 lpTokensBurned)'),
                 args: {
                     token: (token?.address as Address),
                     user: user as Address | undefined
@@ -682,8 +682,8 @@ export class ContractClient implements IContractClient {
                 )
                 result = (logs || []).map((log, index) => ({
                     token: tokens[index],
-                    ethAmount: log.args.ethAmount.toString(),
-                    tokenAmount: log.args.tokenAmount.toString(),
+                    ethAmount: log.args.amountEther.toString(),
+                    tokenAmount: log.args.amountToken.toString(),
                     lpTokensBurnt: log.args.lpTokensBurned.toString(),
                     timestamp: timestamps[index],
                 }));
@@ -691,8 +691,8 @@ export class ContractClient implements IContractClient {
             }
             result = (logs || []).map((log, index) => ({
                 token: token,
-                ethAmount: log.args.ethAmount.toString(),
-                tokenAmount: log.args.tokenAmount.toString(),
+                ethAmount: log.args.amountEther.toString(),
+                tokenAmount: log.args.amountToken.toString(),
                 lpTokensBurnt: log.args.lpTokensBurned.toString(),
                 timestamp: timestamps[index],
             }));

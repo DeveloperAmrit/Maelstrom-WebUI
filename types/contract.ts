@@ -47,7 +47,7 @@ export interface IContractClient {
 export const CONTRACT_ADDRESSES: Record<number, Address> = {
     1: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // Ethereum Mainnet
     61: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // Ethereum Classic
-    63: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // ETC Testnet(Mordor)
+    63: "0xc2bb549FCa8e58a38EcCFa9b69FD6787338Db00e" as Address, // ETC Testnet(Mordor)
     137: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // Polygon
     56: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // BSC
     8453: "0x897CeF988A12AB77A12fd8f2Ca74F0B978d302CF" as Address, // BASE

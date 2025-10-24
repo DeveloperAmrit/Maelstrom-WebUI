@@ -457,7 +457,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                 </div>
                 <div className="text-sm font-medium text-white">
                   {(
-                    ((currentBuyPrice - currentSellPrice) / currentSellPrice) *
+                    ((currentBuyPrice - currentSellPrice) / ((currentSellPrice + currentBuyPrice)/2)) *
                     100
                   ).toFixed(2)}
                   %
