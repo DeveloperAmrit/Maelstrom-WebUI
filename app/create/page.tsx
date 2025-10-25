@@ -30,6 +30,7 @@ export default function CreatePoolPage() {
   );
   const { chain, isConnected } = useAccount();
   const baseUrl = chain?.blockExplorers?.default.url;
+  const nativeCurrencySymbol = chain?.nativeCurrency?.symbol || "ETH";
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
   const [tokenURL, setTokenURL] = useState("");
@@ -101,7 +102,7 @@ export default function CreatePoolPage() {
     }
 
     if (!formData.ethAmount || parseFloat(formData.ethAmount) <= 0) {
-      toast.error("Please enter a valid ETH amount.");
+      toast.error(`Please enter a valid ${nativeCurrencySymbol} amount.`);
       return false;
     }
 
@@ -319,7 +320,7 @@ export default function CreatePoolPage() {
                       htmlFor="ethAmount"
                       className="text-white flex items-center gap-2"
                     >
-                      ETH Amount
+                      {nativeCurrencySymbol} Amount
                     </Label>
                     <Input
                       id="ethAmount"
@@ -362,7 +363,7 @@ export default function CreatePoolPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="buyPrice" className="text-white">
-                        Initial Buy Price (ETH per Token)
+                        Initial Buy Price ({nativeCurrencySymbol} per Token)
                       </Label>
                       <Input
                         id="buyPrice"
@@ -378,7 +379,7 @@ export default function CreatePoolPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="sellPrice" className="text-white">
-                        Initial Sell Price (ETH per Token)
+                        Initial Sell Price ({nativeCurrencySymbol} per Token)
                       </Label>
                       <Input
                         id="sellPrice"
@@ -403,13 +404,13 @@ export default function CreatePoolPage() {
                         <div>
                           <p className="text-muted-foreground">Buy Price:</p>
                           <p className="text-green-400 font-medium">
-                            {formData.inititalBuyPrice} ETH
+                            {formData.inititalBuyPrice} {nativeCurrencySymbol}
                           </p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Sell Price:</p>
                           <p className="text-red-400 font-medium">
-                            {formData.initialSellPrice} ETH
+                            {formData.initialSellPrice} {nativeCurrencySymbol}
                           </p>
                         </div>
                         <div className="col-span-2">
@@ -463,7 +464,7 @@ export default function CreatePoolPage() {
                 </h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>• Valid ERC-20 token contract address</li>
-                  <li>• Initial ETH and token liquidity</li>
+                  <li>• Initial {nativeCurrencySymbol} and token liquidity</li>
                   <li>• Buy price must be higher than sell price</li>
                   <li>• Sufficient token allowance for the contract</li>
                 </ul>

@@ -42,7 +42,8 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
   const [error, setError] = useState<string | null>(null);
   const [nextBlockToFetch, setNextBlockToFetch] = useState<number | null>(null);
   const [hasMoreData, setHasMoreData] = useState(true);
-  const { chainId } = useAccount();
+  const { chainId, chain } = useAccount();
+  const nativeCurrencySymbol = chain?.nativeCurrency?.symbol || "ETH";
   const contractClient = useMemo(
     () => new ContractClient(writeContractAsync, publicClient, chainId),
     [chainId]
@@ -257,7 +258,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                   Buy Price
                 </h4>
                 <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">
-                  {currentBuyPrice} ETH
+                  {currentBuyPrice} {nativeCurrencySymbol}
                 </p>
                 <div className="flex items-center mt-1 text-xs text-muted-foreground">
                   {chartData.length > 0
@@ -322,7 +323,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                       labelStyle={{ color: "rgb(148, 163, 184)" }}
                       labelFormatter={(label) => label}
                       formatter={(value: number) => [
-                        `${value.toFixed(8)} ETH`,
+                        `${value.toFixed(8)} ${nativeCurrencySymbol}`,
                         "Buy Price",
                       ]}
                     />
@@ -354,7 +355,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                   Sell Price
                 </h4>
                 <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-red-500">
-                  {currentSellPrice} ETH
+                  {currentSellPrice} {nativeCurrencySymbol}
                 </p>
                 <div className="flex items-center mt-1 text-xs text-muted-foreground">
                   {chartData.length > 0
@@ -419,7 +420,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                       labelStyle={{ color: "rgb(148, 163, 184)" }}
                       labelFormatter={(label) => label}
                       formatter={(value: number) => [
-                        `${value} ETH`,
+                        `${value} ${nativeCurrencySymbol}`,
                         "Sell Price",
                       ]}
                     />
@@ -473,7 +474,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                     chartData.reduce((sum, point) => sum + point.buyPrice, 0) /
                     chartData.length
                   )}{" "}
-                  ETH
+                  {nativeCurrencySymbol}
                 </div>
               </div>
 
@@ -486,7 +487,7 @@ export function PriceCharts({ token, pool }: PriceChartsProps) {
                     chartData.reduce((sum, point) => sum + point.sellPrice, 0) /
                     chartData.length
                   )}{" "}
-                  ETH
+                  {nativeCurrencySymbol}
                 </div>
               </div>
 
