@@ -34,12 +34,14 @@ export default function CreatePoolPage() {
   const [tokenName, setTokenName] = useState("");
   const [tokenSymbol, setTokenSymbol] = useState("");
   const [tokenURL, setTokenURL] = useState("");
+  const [lessETHValue, setLessETHValue] = useState(false);
+  const [moreETHValue, setMoreETHValue] = useState(false);
 
   const [formData, setFormData] = useState<InitPool>({
     token: "",
     ethAmount: "",
     tokenAmount: "",
-    inititalBuyPrice: "",
+    initialBuyPrice: "",
     initialSellPrice: "",
   });
 
@@ -56,6 +58,34 @@ export default function CreatePoolPage() {
       ...prev,
       [field]: value,
     }));
+    
+    // Create updated values object with the new value
+    const updatedValues = {
+      ...formData,
+      [field]: value,
+    };
+    
+    setLessETHValue(false);
+    setMoreETHValue(false);
+    
+    // Use updatedValues instead of formData to get the current values
+    const tokenAmount = parseFloat(updatedValues.tokenAmount);
+    const ethAmount = parseFloat(updatedValues.ethAmount);
+    const buyPrice = parseFloat(updatedValues.initialBuyPrice);
+    const sellPrice = parseFloat(updatedValues.initialSellPrice);
+    
+    if (tokenAmount && (buyPrice || sellPrice)) {
+      const avgPrice = buyPrice && sellPrice ? (buyPrice + sellPrice) / 2 : (buyPrice || sellPrice);
+      const impliedETHValue = tokenAmount * avgPrice;
+      
+      if (ethAmount) {
+        if (impliedETHValue < ethAmount * 0.25) {
+          setMoreETHValue(true);
+        } else if (impliedETHValue > ethAmount * 0.75) {
+          setLessETHValue(true);
+        }
+      }
+    }
   };
 
   const validateTokenAddress = async (tokenAddress: string) => {
@@ -112,8 +142,8 @@ export default function CreatePoolPage() {
     }
 
     if (
-      !formData.inititalBuyPrice ||
-      parseFloat(formData.inititalBuyPrice) <= 0
+      !formData.initialBuyPrice ||
+      parseFloat(formData.initialBuyPrice) <= 0
     ) {
       toast.error("Please enter a valid initial buy price.");
       return false;
@@ -128,7 +158,7 @@ export default function CreatePoolPage() {
     }
 
     if (
-      parseFloat(formData.inititalBuyPrice) <=
+      parseFloat(formData.initialBuyPrice) <=
       parseFloat(formData.initialSellPrice)
     ) {
       toast.error("Buy price must be higher than sell price.");
@@ -146,14 +176,14 @@ export default function CreatePoolPage() {
       // Convert amounts to wei (assuming 18 decimals for ETH and proper decimals for token)
       const ethAmountWei = parseEther(formData.ethAmount).toString();
       const tokenAmountWei = parseEther(formData.tokenAmount).toString();
-      const buyPriceWei = parseEther(formData.inititalBuyPrice).toString();
+      const buyPriceWei = parseEther(formData.initialBuyPrice).toString();
       const sellPriceWei = parseEther(formData.initialSellPrice).toString();
 
       const initPoolData: InitPool = {
         ...formData,
         ethAmount: ethAmountWei,
         tokenAmount: tokenAmountWei,
-        inititalBuyPrice: buyPriceWei,
+        initialBuyPrice: buyPriceWei,
         initialSellPrice: sellPriceWei,
       };
 
@@ -180,7 +210,7 @@ export default function CreatePoolPage() {
           token: "",
           ethAmount: "",
           tokenAmount: "",
-          inititalBuyPrice: "",
+          initialBuyPrice: "",
           initialSellPrice: "",
         });
         setTokenInfo(null);
@@ -194,11 +224,11 @@ export default function CreatePoolPage() {
   };
 
   const estimatedSpread =
-    formData.inititalBuyPrice && formData.initialSellPrice
+    formData.initialBuyPrice && formData.initialSellPrice
       ? (
-          ((parseFloat(formData.inititalBuyPrice) -
+          ((parseFloat(formData.initialBuyPrice) -
             parseFloat(formData.initialSellPrice)) /
-            parseFloat(formData.inititalBuyPrice)) *
+            parseFloat(formData.initialBuyPrice)) *
           100
         ).toFixed(2)
       : "0";
@@ -314,44 +344,64 @@ export default function CreatePoolPage() {
                 </div>
 
                 {/* Liquidity Amounts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="ethAmount"
-                      className="text-white flex items-center gap-2"
-                    >
-                      {nativeCurrencySymbol} Amount
-                    </Label>
-                    <Input
-                      id="ethAmount"
-                      type="number"
-                      step="0.001"
-                      placeholder="0.0"
-                      value={formData.ethAmount}
-                      onChange={(e) =>
-                        handleInputChange("ethAmount", e.target.value)
-                      }
-                    />
-                  </div>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="ethAmount"
+                        className="text-white flex items-center gap-2"
+                      >
+                        {nativeCurrencySymbol} Amount
+                      </Label>
+                      <Input
+                        id="ethAmount"
+                        type="number"
+                        step="0.001"
+                        placeholder="0.0"
+                        value={formData.ethAmount}
+                        onChange={(e) =>
+                          handleInputChange("ethAmount", e.target.value)
+                        }
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="tokenAmount"
-                      className="text-white flex items-center gap-2"
-                    >
-                      Token Amount
-                    </Label>
-                    <Input
-                      id="tokenAmount"
-                      type="number"
-                      step="0.001"
-                      placeholder="0.0"
-                      value={formData.tokenAmount}
-                      onChange={(e) =>
-                        handleInputChange("tokenAmount", e.target.value)
-                      }
-                    />
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="tokenAmount"
+                        className="text-white flex items-center gap-2"
+                      >
+                        Token Amount
+                      </Label>
+                      <Input
+                        id="tokenAmount"
+                        type="number"
+                        step="0.001"
+                        placeholder="0.0"
+                        value={formData.tokenAmount}
+                        onChange={(e) =>
+                          handleInputChange("tokenAmount", e.target.value)
+                        }
+                      />
+                    </div>
                   </div>
+                  {lessETHValue && (
+                    <div className="p-3 w-full rounded-lg bg-primary/10 border border-primary/20">
+                      <p className="text-sm text-white">
+                        ⚠️ The provided {nativeCurrencySymbol} amount is
+                        significantly lower than the implied value based on
+                        token amount and prices.
+                      </p>
+                    </div>
+                  )}
+                  {moreETHValue && (
+                    <div className="p-3 w-full rounded-lg bg-primary/10 border border-primary/20">
+                      <p className="text-sm text-white">
+                        ⚠️ The provided {nativeCurrencySymbol} amount is
+                        significantly greater than the implied value based on
+                        token amount and prices.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Price Configuration */}
@@ -370,9 +420,9 @@ export default function CreatePoolPage() {
                         type="number"
                         step="0.000001"
                         placeholder="0.0"
-                        value={formData.inititalBuyPrice}
+                        value={formData.initialBuyPrice}
                         onChange={(e) =>
-                          handleInputChange("inititalBuyPrice", e.target.value)
+                          handleInputChange("initialBuyPrice", e.target.value)
                         }
                       />
                     </div>
@@ -395,7 +445,7 @@ export default function CreatePoolPage() {
                   </div>
 
                   {/* Price Summary */}
-                  {formData.inititalBuyPrice && formData.initialSellPrice && (
+                  {formData.initialBuyPrice && formData.initialSellPrice && (
                     <div className="p-4 rounded-lg bg-secondary/10 border border-secondary/20">
                       <h4 className="text-sm font-medium text-white mb-2">
                         Price Summary
@@ -404,7 +454,7 @@ export default function CreatePoolPage() {
                         <div>
                           <p className="text-muted-foreground">Buy Price:</p>
                           <p className="text-green-400 font-medium">
-                            {formData.inititalBuyPrice} {nativeCurrencySymbol}
+                            {formData.initialBuyPrice} {nativeCurrencySymbol}
                           </p>
                         </div>
                         <div>
@@ -454,23 +504,7 @@ export default function CreatePoolPage() {
           </div>
 
           {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="relative rounded-xl overflow-hidden backdrop-blur-xl border border-white/[0.05] p-6">
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.08] to-primary-500/[0.05]" />
-              <div className="absolute inset-0 border border-white/[0.05] rounded-xl" />
-              <div className="relative">
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  📋 Requirements
-                </h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• Valid ERC-20 token contract address</li>
-                  <li>• Initial {nativeCurrencySymbol} and token liquidity</li>
-                  <li>• Buy price must be higher than sell price</li>
-                  <li>• Sufficient token allowance for the contract</li>
-                </ul>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1">
             <div className="relative rounded-xl overflow-hidden backdrop-blur-xl border border-white/[0.05] p-6">
               <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.08] to-primary-500/[0.05]" />
               <div className="absolute inset-0 border border-white/[0.05] rounded-xl" />
