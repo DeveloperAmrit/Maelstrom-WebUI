@@ -49,17 +49,23 @@ export function Header() {
                 href={item.href}
                 data-tour={`${item.name.toLowerCase()}-link`}
                 className={cn(
-                  "text-sm font-medium transition-colors hover:text-accent relative group",
+                  "text-sm font-medium transition-colors hover:text-foreground relative group",
                   pathname === item.href
-                    ? "text-accent"
+                    ? "text-foreground"
                     : "text-muted-foreground"
                 )}
               >
-                {item.name}
+                <span className="relative z-10 inline-block">{item.name}</span>
                 {pathname === item.href && (
-                  <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full" />
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full pointer-events-none z-0"
+                  />
                 )}
-                <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-accent rounded-full scale-x-0 origin-left group-hover:scale-x-100 transition-transform duration-200 pointer-events-none z-0"
+                />
               </Link>
             ))}
           </nav>
